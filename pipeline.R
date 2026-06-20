@@ -760,18 +760,10 @@ for (label in c("training", "testing")) {
       scale_color_manual(values = pal_status)
     print(p)
   } else {
-    # Base R fallback: plot survival from rfsrc/rf.pred object
-    matplot(obj$time.interest, obj$survival,
-            type = "l", lty = 1, col = adjustcolor(nature_blue, 0.3),
-            xlab = "Time (years)", ylab = "Survival Probability",
-            main = paste("RF predicted survival —", label),
-            xlim = c(0, 4))
-    # Add ensemble mortality line
-    lines(obj$time.interest, obj$survival.oob, col = nature_red, lwd = 2)
+    # Base R fallback: use built-in plot.rfsrc / plot.predict.rfsrc
+    plot(obj, main = paste("RF predicted survival —", label))
     abline(v = c(1, 3), lty = 2, col = nature_grey)
     text(0.85, 0.5, paste("OOB error:", oob, "%"))
-    legend("topright", c("Individual", "Ensemble"), col = c(nature_blue, nature_red),
-           lty = 1, lwd = c(1, 2), bty = "n", cex = 0.8)
   }
   dev.off()
 }
