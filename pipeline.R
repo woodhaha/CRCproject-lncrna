@@ -412,19 +412,23 @@ dev.off()
 message("  ✓ Elastic Net deviance curve")
 
 # ── 3.5 Extract non-zero coefficients ───────────────────────────────────────
-res.cv <- cv.glmfit$glmnet.fit
-cof <- coef(res.cv, s = cv.glmfit$lambda.min)
-cof <- as.data.frame(as.matrix(cof))
-cof$ENSG_id <- row.names(cof)
-cof$Symbol  <- lookup(cof$ENSG_id, lncRNA_v22)
-colnames(cof) <- c("beta", "ENSG_id", "Symbol")
-
-nonozero.coef <- dplyr::filter(cof, beta != 0) %>% arrange(desc(beta))
-message(sprintf("  %d lncRNAs with non-zero coefficients", nrow(nonozero.coef)))
-
-# Coefficient shrinkage paths
-cofn <- cof[which(cof[, 1] != 0), ]
-bet  <- res.cv$beta[match(names(cofn), rownames(res.cv$beta)), ]
+	res.cv <- cv.glmfit$glmnet.fit
+	# Extract coefficients as named vector for plotCoef compatibility
+	cof_raw <- coef(res.cv, s = cv.glmfit$lambda.min)
+	cof_vec <- as.numeric(cof_raw)
+	names(cof_vec) <- rownames(cof_raw)
+	cof_vec <- cof_vec[cof_vec != 0]
+	# Also build dataframe for downstream use
+	cof <- as.data.frame(as.matrix(cof_raw))
+	cof$ENSG_id <- row.names(cof)
+	cof$Symbol  <- lookup(cof$ENSG_id, lncRNA_v22)
+	colnames(cof) <- c("beta", "ENSG_id", "Symbol")
+	
+	nonozero.coef <- dplyr::filter(cof, beta != 0) %>% arrange(desc(beta))
+	message(sprintf("  %d lncRNAs with non-zero coefficients", nrow(nonozero.coef)))
+	
+	# Coefficient shrinkage paths -- use named vector from cof_vec
+	bet <- res.cv$beta[match(names(cof_vec), rownames(res.cv$beta)), ]
 
 cairo_pdf(file.path(OUT_DIR, "Fig_3c_coefficient_paths.pdf"), width = 6, height = 5)
 glmnet:::plotCoef(bet, lambda = res.cv$lambda, df = res.cv$df,
