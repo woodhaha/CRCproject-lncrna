@@ -58,6 +58,13 @@ lookup <- function(terms, key.match, missing = NA) {
 # Check if ggRandomForests loaded; if not, provide base-graphics fallbacks
 has.ggRF <- requireNamespace("ggRandomForests", quietly = TRUE)
 
+# ── Multicore setup ──────────────────────────────────────────────────────────
+library(parallel)
+n_cores <- max(1, detectCores() - 1)  # leave 1 core free
+message(sprintf("  Parallel: %d cores available", n_cores))
+options(rf.cores = n_cores)            # randomForestSRC uses all available cores
+mc_cores <- n_cores                    # for mclapply
+
 # Global graphical parameters
 theme_set(theme_pubr(base_size = 10))
 par(mfrow = c(1, 1), las = 1)
@@ -322,37 +329,45 @@ survdata <- survdata %>% mutate(status = as.numeric(as.vector(status)))
 message(sprintf("  Survival matrix: %d patients × %d lncRNAs",
                 nrow(survdata), ncol(survdata) - 4))
 
-# ── 3.2 Elastic Net tuning (grid search over α) ────────────────────────────
-# Replace c060::EPSGO (broken in R 4.6) with manual alpha grid search
+# ── 3.2 Elastic Net tuning (grid search over α, multicore) ──────────────────
+# Parallelize alpha grid: each cv.glmnet runs on a separate core
 set.seed(12345)
 alpha_grid <- seq(0, 1, by = 0.1)
-cv_results <- list()
-best_deviance <- Inf
-best_alpha <- 0.5
-best_lambda <- 0.1
 
-cl <- makePSOCKcluster(min(3, parallel::detectCores() - 1))
+cl <- makePSOCKcluster(n_cores)
 registerDoParallel(cl)
 
-for (a in alpha_grid) {
+# Export needed objects to workers
+clusterExport(cl, c("survdata", "alpha_grid"), envir = environment())
+
+cv_fits <- foreach(a = alpha_grid, .packages = c("glmnet", "survival"),
+                    .export = c("survdata")) %dopar% {
   set.seed(12345)
-  fit_try <- tryCatch(
+  tryCatch(
     cv.glmnet(y = Surv(survdata$OS, survdata$status),
               x = as.matrix(survdata[, 5:ncol(survdata)]),
               family = "cox", standardize = TRUE,
               alpha = a, nlambda = 50, nfolds = 10),
     error = function(e) NULL)
-  if (!is.null(fit_try)) {
-    cv_results[[as.character(a)]] <- fit_try
-    min_dev <- min(fit_try$cvm)
-    if (min_dev < best_deviance) {
-      best_deviance <- min_dev
-      best_alpha <- a
-      best_lambda <- fit_try$lambda.min
-    }
+}
+names(cv_fits) <- as.character(alpha_grid)
+
+stopCluster(cl); registerDoSEQ()
+
+# Collect results
+cv_results <- cv_fits[!sapply(cv_fits, is.null)]
+best_deviance <- Inf
+best_alpha <- 0.5
+best_lambda <- 0.1
+for (a_name in names(cv_results)) {
+  fit_try <- cv_results[[a_name]]
+  min_dev <- min(fit_try$cvm)
+  if (min_dev < best_deviance) {
+    best_deviance <- min_dev
+    best_alpha <- as.numeric(a_name)
+    best_lambda <- fit_try$lambda.min
   }
 }
-stopCluster(cl); registerDoSEQ()
 
 opt_alpha  <- best_alpha
 opt_lambda <- best_lambda
@@ -482,18 +497,17 @@ Test  <- survdata[-trainIndex, ] %>% dplyr::select(-group)
 Train <- Train[, colnames(Train) %in% c("id", "OS", "stage", "status", nonozero.coef$ENSG_id)]
 Test  <- Test[, colnames(Test) %in% c("id", "OS", "stage", "status", nonozero.coef$ENSG_id)]
 
-# Rename ENSG columns to gene symbols for readable figures
-ensg_in_data <- intersect(colnames(Train), lncRNA_v22$ENSG_id)
-sym_lookup   <- setNames(lncRNA_v22$Symbol[match(ensg_in_data, lncRNA_v22$ENSG_id)], ensg_in_data)
-sym_lookup   <- sym_lookup[!is.na(names(sym_lookup)) & !is.na(sym_lookup) & sym_lookup != ""]
-# Only rename columns whose symbol exists and doesn't collide with existing names
-to_rename <- sym_lookup[names(sym_lookup) %in% colnames(Train)]
-# Avoid collisions: skip if symbol already exists as another column name
-to_rename <- to_rename[!to_rename %in% setdiff(colnames(Train), names(to_rename))]
-if (length(to_rename) > 0) {
-  colnames(Train)[match(names(to_rename), colnames(Train))] <- unname(to_rename)
-  colnames(Test)[match(names(to_rename), colnames(Test))]   <- unname(to_rename)
-  message(sprintf("  Renamed %d ENSG columns to gene symbols", length(to_rename)))
+# Rename ENSG columns to gene symbols (only columns matching ENSG pattern)
+ensg_pattern <- grep("^ENSG[0-9]+[.][0-9]+$", colnames(Train), value = TRUE)
+if (length(ensg_pattern) > 0) {
+  sym_lookup <- setNames(lncRNA_v22$Symbol[match(ensg_pattern, lncRNA_v22$ENSG_id)], ensg_pattern)
+  sym_lookup <- sym_lookup[!is.na(sym_lookup) & sym_lookup != ""]
+  to_rename  <- sym_lookup[!sym_lookup %in% colnames(Train)]  # avoid collisions
+  if (length(to_rename) > 0) {
+    colnames(Train)[match(names(to_rename), colnames(Train))] <- unname(to_rename)
+    colnames(Test)[match(names(to_rename), colnames(Test))]   <- unname(to_rename)
+    message(sprintf("  Renamed %d ENSG columns → gene symbols", length(to_rename)))
+  }
 }
 message(sprintf("  Train=%d  Test=%d  Features=%d", nrow(Train), nrow(Test), ncol(Train) - 4))
 
@@ -691,7 +705,7 @@ rfdata_test <- rfdata_test[, colnames(rfdata_test) %in%
 
 # ── 4.2 Hyperparameter tuning ───────────────────────────────────────────────
 set.seed(12345)
-options(rf.cores = 4)
+# rf.cores already set globally via n_cores
 rf_tune <- tune(Surv(OS, status) ~ ., data = rfdata_train,
   mtryStart = floor(sqrt(ncol(rfdata_train))),
   nodesizeTry = c(1:9, seq(10, 100, by = 5)), ntreeTry = 500,
@@ -715,7 +729,7 @@ message("  ✓ OOB error surface")
 
 # ── 4.3 Fit Random Forest Survival ──────────────────────────────────────────
 set.seed(12345)
-options(rf.cores = 4)
+# rf.cores already set globally via n_cores
 rfsrc <- rfsrc(Surv(OS, status) ~ ., data = rfdata_train,
   nsplit = 3, mtry = rf_tune$optimal["mtry"],
   nodesize = rf_tune$optimal["nodesize"],
@@ -1001,7 +1015,7 @@ message(sprintf("  Elastic Net: best α=%.2f λ=%.4f",
                 elastnet$bestTune$alpha, elastnet$bestTune$lambda))
 
 # ── 5.6 Random Forest ───────────────────────────────────────────────────────
-cl <- makePSOCKcluster(3)
+cl <- makePSOCKcluster(n_cores)
 registerDoParallel(cl)
 set.seed(12345)
 RF <- train(group ~ ., data = train, method = "ranger", tuneLength = 10,
@@ -1012,7 +1026,7 @@ stopCluster(cl); registerDoSEQ()
 message(sprintf("  Random Forest: best mtry=%d", RF$bestTune$mtry))
 
 # ── 5.7 SVM ─────────────────────────────────────────────────────────────────
-cl <- makePSOCKcluster(3)
+cl <- makePSOCKcluster(n_cores)
 registerDoParallel(cl)
 set.seed(12345)
 SVM <- train(group ~ ., data = train, method = "svmRadial",
@@ -1024,7 +1038,7 @@ message(sprintf("  SVM: best sigma=%.2f C=%.2f",
                 SVM$bestTune$sigma, SVM$bestTune$C))
 
 # ── 5.8 Neural Network ─────────────────────────────────────────────────────
-cl <- makePSOCKcluster(3)
+cl <- makePSOCKcluster(n_cores)
 registerDoParallel(cl)
 set.seed(12345)
 NNET <- train(group ~ ., data = train, method = "nnet", tuneLength = 10,
