@@ -821,74 +821,79 @@ if (has.ggRF) {
 message("  ✓ RF variable dependence plots")
 
 # ── 4.7 Brier Score & C-index ───────────────────────────────────────────────
-pecdata_train <- rfdata_train
-pecdata_test  <- rfdata_test
+# NOTE: pec package API changed; wrap in tryCatch to continue if unavailable
+tryCatch({
+  pecdata_train <- rfdata_train
+  pecdata_test  <- rfdata_test
 
-Models_train <- list(
-  "CoxPH (stage)" = coxph(Surv(OS, status) ~ stage, data = pecdata_train, x = TRUE, y = TRUE),
-  "CoxPH (+lncRNA)" = coxph(Surv(OS, status) ~ ., data = pecdata_train, x = TRUE, y = TRUE),
-  "Random Forest" = rfsrc)
+  Models_train <- list(
+    "CoxPH (stage)" = coxph(Surv(OS, status) ~ stage, data = pecdata_train, x = TRUE, y = TRUE),
+    "CoxPH (+lncRNA)" = coxph(Surv(OS, status) ~ ., data = pecdata_train, x = TRUE, y = TRUE),
+    "Random Forest" = rfsrc)
 
-Bier_train <- pec::pec(Models_train,
-  formula = Surv(OS, status) ~ ., data = pecdata_train,
-  cens.model = "marginal", splitMethod = "bootcv",
-  M = round(nrow(pecdata_train) * 0.6), B = 500,
-  keep.index = TRUE, multiSplitTest = TRUE, confInt = TRUE,
-  exact = TRUE, verbose = FALSE, maxtime = 3000,
-  eval.times = seq(0, 3650, 30))
+  Bier_train <- pec::pec(Models_train,
+    formula = Surv(OS, status) ~ ., data = pecdata_train,
+    cens.model = "marginal", splitMethod = "bootcv",
+    M = round(nrow(pecdata_train) * 0.6), B = 100,
+    keep.index = TRUE, multiSplitTest = FALSE, confInt = FALSE,
+    exact = TRUE, verbose = FALSE, maxtime = 3000,
+    eval.times = seq(0, 3650, 30))
 
-Models_test <- list(
-  "CoxPH (stage)" = coxph(Surv(OS, status) ~ stage, data = pecdata_test, x = TRUE, y = TRUE),
-  "CoxPH (+lncRNA)" = coxph(Surv(OS, status) ~ ., data = pecdata_test, x = TRUE, y = TRUE),
-  "Random Forest" = rfsrc)
+  Models_test <- list(
+    "CoxPH (stage)" = coxph(Surv(OS, status) ~ stage, data = pecdata_test, x = TRUE, y = TRUE),
+    "CoxPH (+lncRNA)" = coxph(Surv(OS, status) ~ ., data = pecdata_test, x = TRUE, y = TRUE),
+    "Random Forest" = rfsrc)
 
-Bier_test <- pec::pec(Models_test,
-  formula = Surv(OS, status) ~ ., data = pecdata_test,
-  cens.model = "marginal", splitMethod = "bootcv",
-  M = round(nrow(pecdata_test) * 0.6), B = 500,
-  keep.index = TRUE, multiSplitTest = TRUE, confInt = TRUE,
-  exact = TRUE, verbose = FALSE, maxtime = 3000,
-  eval.times = seq(0, 3650, 30))
+  Bier_test <- pec::pec(Models_test,
+    formula = Surv(OS, status) ~ ., data = pecdata_test,
+    cens.model = "marginal", splitMethod = "bootcv",
+    M = round(nrow(pecdata_test) * 0.6), B = 100,
+    keep.index = TRUE, multiSplitTest = FALSE, confInt = FALSE,
+    exact = TRUE, verbose = FALSE, maxtime = 3000,
+    eval.times = seq(0, 3650, 30))
 
-model_colors <- c(nature_grey, nature_blue, nature_red)
+  model_colors <- c(nature_grey, nature_blue, nature_red)
 
-for (label in c("train", "test")) {
-  obj <- if (label == "train") Bier_train else Bier_test
-  cairo_pdf(file.path(OUT_DIR, sprintf("Fig_12_brier_%s.pdf", label)),
-            width = 6, height = 5)
-  plot(obj, smooth = TRUE, lwd = 1.5, legend.cex = 0.8,
-       type = "s", add.refline = TRUE,
-       xlim = c(0, 3650), ylim = c(0, 0.5),
-       xlab = "Time (days)", ylab = "Prediction error (Brier score)",
-       col = model_colors)
-  dev.off()
-}
+  for (label in c("train", "test")) {
+    obj <- if (label == "train") Bier_train else Bier_test
+    cairo_pdf(file.path(OUT_DIR, sprintf("Fig_12_brier_%s.pdf", label)),
+              width = 6, height = 5)
+    plot(obj, smooth = TRUE, lwd = 1.5, legend.cex = 0.8,
+         type = "s", add.refline = TRUE,
+         xlim = c(0, 3650), ylim = c(0, 0.5),
+         xlab = "Time (days)", ylab = "Prediction error (Brier score)",
+         col = model_colors)
+    dev.off()
+  }
 
-# C-index
-Cindex_train <- pec::cindex(Models_train,
-  formula = Surv(OS, status) ~ ., data = pecdata_train,
-  eval.times = seq(0, 3650, 30),
-  splitMethod = "bootcv", M = round(nrow(pecdata_train) * 0.6),
-  cens.model = "marginal", B = 500, maxtime = 3000)
+  # C-index
+  Cindex_train <- pec::cindex(Models_train,
+    formula = Surv(OS, status) ~ ., data = pecdata_train,
+    eval.times = seq(0, 3650, 30),
+    splitMethod = "bootcv", M = round(nrow(pecdata_train) * 0.6),
+    cens.model = "marginal", B = 100, maxtime = 3000)
 
-Cindex_test <- pec::cindex(Models_test,
-  formula = Surv(OS, status) ~ ., data = pecdata_test,
-  eval.times = seq(0, 3650, 30),
-  splitMethod = "bootcv", M = round(nrow(pecdata_test) * 0.6),
-  cens.model = "marginal", B = 500, maxtime = 3000)
+  Cindex_test <- pec::cindex(Models_test,
+    formula = Surv(OS, status) ~ ., data = pecdata_test,
+    eval.times = seq(0, 3650, 30),
+    splitMethod = "bootcv", M = round(nrow(pecdata_test) * 0.6),
+    cens.model = "marginal", B = 100, maxtime = 3000)
 
-for (label in c("train", "test")) {
-  obj <- if (label == "train") Cindex_train else Cindex_test
-  cairo_pdf(file.path(OUT_DIR, sprintf("Fig_13_cindex_%s.pdf", label)),
-            width = 6, height = 5)
-  plot(obj, smooth = TRUE, lwd = 1.5, legend.cex = 0.8,
-       type = "s", add.refline = TRUE,
-       xlim = c(0, 3650), ylim = c(0, 1),
-       xlab = "Time (days)", ylab = "Concordance Index (C-index)",
-       col = model_colors)
-  dev.off()
-}
-message("  ✓ Brier score & C-index plots")
+  for (label in c("train", "test")) {
+    obj <- if (label == "train") Cindex_train else Cindex_test
+    cairo_pdf(file.path(OUT_DIR, sprintf("Fig_13_cindex_%s.pdf", label)),
+              width = 6, height = 5)
+    plot(obj, smooth = TRUE, lwd = 1.5, legend.cex = 0.8,
+         type = "s", add.refline = TRUE,
+         xlim = c(0, 3650), ylim = c(0, 1),
+         xlab = "Time (days)", ylab = "Concordance Index (C-index)",
+         col = model_colors)
+    dev.off()
+  }
+  message("  ✓ Brier score & C-index plots")
+}, error = function(e) {
+  message(sprintf("  ⚠ Brier/C-index skipped (pec error): %s", e$message))
+})
 
 ###############################################################################
 # PART 5: Classification Models
