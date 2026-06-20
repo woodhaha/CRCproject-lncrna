@@ -1,0 +1,61 @@
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+.Rapp.history
+.Renviron
+.Renviron.site
+
+# R package cache
+renv/
+packrat/
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fls
+*.fdb_latexmk
+*.glg
+*.glo
+*.gls
+*.idx
+*.ilg
+*.ind
+*.ist
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.snm
+*.synctex*
+*.tdo
+*.toc
+*.vrb
+*.run.xml
+*-blx.bib
+
+# Temporary/backup
+*~
+*.bak
+*.swp
+*.tmp
+~$*
+.DS_Store
+Thumbs.db
+$RECYCLE.BIN/
+
+# Claude/OMC state (session-level, not project)
+.claude/sessions/
+.claude/state/
+.omc/state/
+.omc/sessions/
+
+# Archives
+*.rar
+*.zip
+*.7z
