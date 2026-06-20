@@ -830,7 +830,7 @@ Models_train <- list(
   "Random Forest" = rfsrc)
 
 Bier_train <- pec::pec(Models_train,
-  formula = Hist(OS, status) ~ ., data = pecdata_train,
+  formula = Surv(OS, status) ~ ., data = pecdata_train,
   cens.model = "marginal", splitMethod = "bootcv",
   M = round(nrow(pecdata_train) * 0.6), B = 500,
   keep.index = TRUE, multiSplitTest = TRUE, confInt = TRUE,
@@ -843,7 +843,7 @@ Models_test <- list(
   "Random Forest" = rfsrc)
 
 Bier_test <- pec::pec(Models_test,
-  formula = Hist(OS, status) ~ ., data = pecdata_test,
+  formula = Surv(OS, status) ~ ., data = pecdata_test,
   cens.model = "marginal", splitMethod = "bootcv",
   M = round(nrow(pecdata_test) * 0.6), B = 500,
   keep.index = TRUE, multiSplitTest = TRUE, confInt = TRUE,
@@ -866,13 +866,13 @@ for (label in c("train", "test")) {
 
 # C-index
 Cindex_train <- pec::cindex(Models_train,
-  formula = Hist(OS, status) ~ ., data = pecdata_train,
+  formula = Surv(OS, status) ~ ., data = pecdata_train,
   eval.times = seq(0, 3650, 30),
   splitMethod = "bootcv", M = round(nrow(pecdata_train) * 0.6),
   cens.model = "marginal", B = 500, maxtime = 3000)
 
 Cindex_test <- pec::cindex(Models_test,
-  formula = Hist(OS, status) ~ ., data = pecdata_test,
+  formula = Surv(OS, status) ~ ., data = pecdata_test,
   eval.times = seq(0, 3650, 30),
   splitMethod = "bootcv", M = round(nrow(pecdata_test) * 0.6),
   cens.model = "marginal", B = 500, maxtime = 3000)
