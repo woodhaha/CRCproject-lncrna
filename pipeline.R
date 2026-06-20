@@ -43,6 +43,21 @@ pkgs <- c("ggplot2", "dplyr", "reshape2", "RColorBrewer", "scales", "grid",
 
 LoadRpak(pkgs)
 
+# ── Fallback functions (packages that may fail on some systems) ──────────────
+# Simple lookup: maps terms to values via a 2-column match table
+lookup <- function(terms, key.match, missing = NA) {
+  if (is.data.frame(key.match) && ncol(key.match) >= 2) {
+    idx <- match(terms, key.match[[1]])
+    out <- key.match[[2]][idx]
+    out[is.na(idx)] <- missing
+    return(out)
+  }
+  return(rep(missing, length(terms)))
+}
+
+# Check if ggRandomForests loaded; if not, provide base-graphics fallbacks
+has.ggRF <- requireNamespace("ggRandomForests", quietly = TRUE)
+
 # Global graphical parameters
 theme_set(theme_pubr(base_size = 10))
 par(mfrow = c(1, 1), las = 1)
@@ -252,10 +267,10 @@ write.table(log_rank_os, file.path(OUT_DIR, "log_rank_os.txt"), quote = FALSE)
 # Univariate Cox PH (batch)
 covariates <- colnames(Clinic_lncRNA_Exprs)[!colnames(Clinic_lncRNA_Exprs) %in%
                                               c("id", "status", "OS")]
-coxdata <- Clinic_lncRNA_Exprs %>% dplyr::select(-id, -status)
+coxdata <- Clinic_lncRNA_Exprs %>% dplyr::select(-id)
 
 cox_os_formulas <- sapply(covariates,
-  function(x) as.formula(paste("Surv(OS, Status)~", x)))
+  function(x) as.formula(paste("Surv(OS, status)~", x)))
 cox_os_models <- lapply(cox_os_formulas,
   function(x) { coxph(x, data = coxdata) })
 
@@ -276,9 +291,11 @@ coxph_os <- lapply(cox_os_models, function(x) {
 
 coxph_os_res <- as.data.frame(do.call(rbind, coxph_os), stringsAsFactors = FALSE)
 coxph_os_res <- data.frame(ENSG_id = rownames(coxph_os_res), coxph_os_res)
-coxph_os_res <- coxph_os_res %>% mutate(
-  beta = as.numeric(beta), HR = as.numeric(HR),
-  wald.test = as.numeric(wald.test), HR.pvalue = as.numeric(HR.pvalue))
+# Fix types: rbind coerced all to character
+coxph_os_res$beta      <- as.numeric(coxph_os_res$beta)
+coxph_os_res$HR        <- as.numeric(coxph_os_res$HR)
+coxph_os_res$wald.test <- as.numeric(coxph_os_res$wald.test)
+coxph_os_res$HR.pvalue <- as.numeric(coxph_os_res$HR.pvalue)
 coxph_os_res$Symbol <- lookup(coxph_os_res$ENSG_id, lncRNA_v22)
 coxph_os_res <- na.omit(coxph_os_res)
 write.csv(coxph_os_res, file.path(OUT_DIR, "coxph_os.csv"), row.names = FALSE)
@@ -662,12 +679,26 @@ plot(rfsrc, main = "Random Forest OOB Error and Variable Importance")
 dev.off()
 
 cairo_pdf(file.path(OUT_DIR, "Fig_S3_rf_vimp_bar.pdf"), width = 6, height = 5)
-print(
-  plot(gg_vimp(rfsrc)) +
-    theme(legend.position = "top") +
-    labs(fill = "VIMP > 0", title = "Variable Importance for OS Prediction") +
-    theme(plot.title = element_text(size = 14, hjust = 0.5))
-)
+if (has.ggRF) {
+  print(
+    plot(gg_vimp(rfsrc)) +
+      theme(legend.position = "top") +
+      labs(fill = "VIMP > 0", title = "Variable Importance for OS Prediction") +
+      theme(plot.title = element_text(size = 14, hjust = 0.5))
+  )
+} else {
+  # Base R fallback: variable importance from rfsrc
+  vimp_data <- data.frame(
+    Variable = names(rfsrc$importance),
+    Importance = as.numeric(rfsrc$importance))
+  vimp_data <- vimp_data[order(vimp_data$Importance, decreasing = TRUE), ]
+  vimp_data <- head(vimp_data, 15)
+  par(las = 2, mar = c(6, 8, 4, 2))
+  barplot(vimp_data$Importance, names.arg = vimp_data$Variable,
+          horiz = TRUE, col = nature_blue, border = NA,
+          main = "Variable Importance for OS Prediction",
+          xlab = "Variable Importance (VIMP)")
+}
 dev.off()
 
 # ── 4.5 RF predicted survival ───────────────────────────────────────────────
@@ -676,50 +707,80 @@ for (label in c("training", "testing")) {
   oob  <- round(mean(na.omit(obj$err.rate)) * 100, 3)
   cairo_pdf(file.path(OUT_DIR,
     sprintf("Fig_9_rf_survival_%s.pdf", label)), width = 5, height = 5)
-  p <- plot(gg_rfsrc(obj)) +
-    theme(legend.position = c(0.1, 0.2)) +
-    labs(title = paste("RF predicted survival —", label),
-         y = "Survival Probability", x = "Time (years)") +
-    theme(plot.title = element_text(size = 14, hjust = 0)) +
-    geom_vline(xintercept = c(1, 3), linetype = "dashed", color = nature_grey) +
-    coord_cartesian(x = c(0, 4)) + theme_pubr() + geom_rug() +
-    annotate("text", x = 0.85, y = 0.5, color = "black",
-             label = paste("OOB error:", oob, "%")) +
-    scale_color_manual(values = pal_status)
-  print(p)
+  if (has.ggRF) {
+    p <- plot(gg_rfsrc(obj)) +
+      theme(legend.position = c(0.1, 0.2)) +
+      labs(title = paste("RF predicted survival —", label),
+           y = "Survival Probability", x = "Time (years)") +
+      theme(plot.title = element_text(size = 14, hjust = 0)) +
+      geom_vline(xintercept = c(1, 3), linetype = "dashed", color = nature_grey) +
+      coord_cartesian(x = c(0, 4)) + theme_pubr() + geom_rug() +
+      annotate("text", x = 0.85, y = 0.5, color = "black",
+               label = paste("OOB error:", oob, "%")) +
+      scale_color_manual(values = pal_status)
+    print(p)
+  } else {
+    # Base R fallback: plot survival from rfsrc/rf.pred object
+    matplot(obj$time.interest, obj$survival,
+            type = "l", lty = 1, col = adjustcolor(nature_blue, 0.3),
+            xlab = "Time (years)", ylab = "Survival Probability",
+            main = paste("RF predicted survival —", label),
+            xlim = c(0, 4))
+    # Add ensemble mortality line
+    lines(obj$time.interest, obj$survival.oob, col = nature_red, lwd = 2)
+    abline(v = c(1, 3), lty = 2, col = nature_grey)
+    text(0.85, 0.5, paste("OOB error:", oob, "%"))
+    legend("topright", c("Individual", "Ensemble"), col = c(nature_blue, nature_red),
+           lty = 1, lwd = c(1, 2), bty = "n", cex = 0.8)
+  }
   dev.off()
 }
 message("  ✓ RF survival prediction plots")
 
 # ── 4.6 RF variable dependence ──────────────────────────────────────────────
-gg_v <- gg_variable(rfsrc, time = c(1, 3, 5),
-                     time.labels = c("1 Year", "3 Years", "5 Years"))
+if (has.ggRF) {
+  gg_v <- gg_variable(rfsrc, time = c(1, 3, 5),
+                       time.labels = c("1 Year", "3 Years", "5 Years"))
 
-cairo_pdf(file.path(OUT_DIR, "Fig_10_rf_stage_survival.pdf"), width = 5, height = 6)
-print(
-  plot(gg_v, xvar = "stage", alpha = 0.6) +
-    labs(title = "Survival Probability by Tumor Stage") +
-    theme(legend.position = "top") +
-    labs(y = "Survival", x = "Tumor Stage") +
-    scale_color_manual(values = pal_status) +
-    theme(plot.title = element_text(size = 14, hjust = 0.5))
-)
-dev.off()
+  cairo_pdf(file.path(OUT_DIR, "Fig_10_rf_stage_survival.pdf"), width = 5, height = 6)
+  print(
+    plot(gg_v, xvar = "stage", alpha = 0.6) +
+      labs(title = "Survival Probability by Tumor Stage") +
+      theme(legend.position = "top") +
+      labs(y = "Survival", x = "Tumor Stage") +
+      scale_color_manual(values = pal_status) +
+      theme(plot.title = element_text(size = 14, hjust = 0.5))
+  )
+  dev.off()
 
-# lncRNA-dependent survival
-colnames(gg_v)[2:8] <- lookup(colnames(gg_v)[2:8], Annotation23[, -2])
-cairo_pdf(file.path(OUT_DIR, "Fig_11_rf_lncrna_survival.pdf"), width = 7, height = 6)
-print(
-  plot(gg_v, xvar = colnames(gg_v)[2:8], panel = TRUE, alpha = 0.1) +
-    theme(legend.position = "top") +
-    labs(title = "LncRNA Expression-Dependent Survival Probability",
-         y = "Survival Probability",
-         x = "lncRNA Expression log2(FPKM+0.001)") +
-    scale_color_manual(values = pal_status) +
-    coord_cartesian(ylim = c(0.4, 1)) +
-    theme(plot.title = element_text(size = 12, hjust = 0.5))
-)
-dev.off()
+  # lncRNA-dependent survival
+  colnames(gg_v)[2:8] <- lookup(colnames(gg_v)[2:8], Annotation23[, -2])
+  cairo_pdf(file.path(OUT_DIR, "Fig_11_rf_lncrna_survival.pdf"), width = 7, height = 6)
+  print(
+    plot(gg_v, xvar = colnames(gg_v)[2:8], panel = TRUE, alpha = 0.1) +
+      theme(legend.position = "top") +
+      labs(title = "LncRNA Expression-Dependent Survival Probability",
+           y = "Survival Probability",
+           x = "lncRNA Expression log2(FPKM+0.001)") +
+      scale_color_manual(values = pal_status) +
+      coord_cartesian(ylim = c(0.4, 1)) +
+      theme(plot.title = element_text(size = 12, hjust = 0.5))
+  )
+  dev.off()
+} else {
+  # Base R fallback: plot.variable from randomForestSRC
+  cairo_pdf(file.path(OUT_DIR, "Fig_10_rf_stage_survival.pdf"), width = 6, height = 5)
+  plot.variable(rfsrc, xvar.names = "stage", time = c(1, 3, 5),
+                surv.type = "surv", main = "Survival by Stage")
+  dev.off()
+
+  cairo_pdf(file.path(OUT_DIR, "Fig_11_rf_lncrna_survival.pdf"), width = 8, height = 6)
+  lnc_vars <- intersect(cox_vip_list, colnames(rfsrc$xvar))
+  plot.variable(rfsrc, xvar.names = lnc_vars, time = c(1, 3, 5),
+                surv.type = "surv", partial = TRUE,
+                main = "LncRNA Expression-Dependent Survival")
+  dev.off()
+}
 message("  ✓ RF variable dependence plots")
 
 # ── 4.7 Brier Score & C-index ───────────────────────────────────────────────
