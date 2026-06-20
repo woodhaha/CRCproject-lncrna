@@ -645,7 +645,7 @@ print(
   ggdotchart(risk_df, x = "id", y = "log10.riskScore",
              shape = "group", color = "survival.status",
              title = "Risk score distribution of TCGA-COAD patients",
-             repel = TRUE, ylab = expression(Log[10] ~ "(RiskScore)"),
+             repel = TRUE, ylab = "log10(RiskScore)",
              size = 1, palette = pal_status,
              ggtheme = theme_pubr()) +
     coord_flip() +
