@@ -322,41 +322,77 @@ survdata <- survdata %>% mutate(status = as.numeric(as.vector(status)))
 message(sprintf("  Survival matrix: %d patients × %d lncRNAs",
                 nrow(survdata), ncol(survdata) - 4))
 
-# ── 3.2 Elastic Net tuning (global optimization) ────────────────────────────
+# ── 3.2 Elastic Net tuning (grid search over α) ────────────────────────────
+# Replace c060::EPSGO (broken in R 4.6) with manual alpha grid search
 set.seed(12345)
-foldid <- balancedFolds(
-  class.column.factor = cbind(time = survdata$OS, status = survdata$status)[, 2],
-  cross.outer = 10)
+alpha_grid <- seq(0, 1, by = 0.1)
+cv_results <- list()
+best_deviance <- Inf
+best_alpha <- 0.5
+best_lambda <- 0.1
 
-bounds <- t(data.frame(alpha = c(0, 1)))
-colnames(bounds) <- c("lower", "upper")
+cl <- makePSOCKcluster(min(3, parallel::detectCores() - 1))
+registerDoParallel(cl)
 
-fit_epsgo <- EPSGO(
-  Q.func = "tune.glmnet.interval", bounds = bounds, parms.coding = "none",
-  seed = 1234, fminlower = -100,
-  x = as.matrix(survdata[, 5:ncol(survdata)]),
-  y = cbind(time = survdata$OS, status = survdata$status),
-  family = "cox", foldid = foldid,
-  type.min = "lambda.min", type.measure = "deviance", verbose = FALSE)
+for (a in alpha_grid) {
+  set.seed(12345)
+  fit_try <- tryCatch(
+    cv.glmnet(y = Surv(survdata$OS, survdata$status),
+              x = as.matrix(survdata[, 5:ncol(survdata)]),
+              family = "cox", standardize = TRUE,
+              alpha = a, nlambda = 50, nfolds = 10),
+    error = function(e) NULL)
+  if (!is.null(fit_try)) {
+    cv_results[[as.character(a)]] <- fit_try
+    min_dev <- min(fit_try$cvm)
+    if (min_dev < best_deviance) {
+      best_deviance <- min_dev
+      best_alpha <- a
+      best_lambda <- fit_try$lambda.min
+    }
+  }
+}
+stopCluster(cl)
 
-parameter <- summary(fit_epsgo, verbose = FALSE)
+opt_alpha  <- best_alpha
+opt_lambda <- best_lambda
+opt_error  <- best_deviance
+
 message(sprintf("  Optimal: α=%.3f  λ=%.3f  deviance=%.3f",
-                parameter$opt.alpha, parameter$opt.lambda, parameter$opt.error))
+                opt_alpha, opt_lambda, opt_error))
 
-# ── 3.3 Cross-validation deviance surface (Nature colors) ───────────────────
-cairo_pdf(file.path(OUT_DIR, "Fig_3a_crossvalidation_deviance.pdf"), width = 6, height = 5)
-plot(parameter, col = nature_blue)
+# ── 3.3 Cross-validation deviance surface ───────────────────────────────────
+# Plot deviance curves for each alpha
+cairo_pdf(file.path(OUT_DIR, "Fig_3a_crossvalidation_deviance.pdf"), width = 8, height = 6)
+plot(cv_results[["0"]]$lambda, cv_results[["0"]]$cvm, type = "n",
+     log = "x", ylim = range(sapply(cv_results, function(f) range(f$cvm))),
+     xlab = expression(log(lambda)), ylab = "Partial Likelihood Deviance",
+     main = "Elastic Net CV Deviance by Alpha")
+alphas_used <- names(cv_results)
+for (i in seq_along(cv_results)) {
+  lines(cv_results[[i]]$lambda, cv_results[[i]]$cvm,
+        col = colorRampPalette(c(nature_blue, nature_red))(length(cv_results))[i],
+        lwd = 1.5)
+}
+legend("topright", legend = paste0("α=", alphas_used),
+       col = colorRampPalette(c(nature_blue, nature_red))(length(cv_results)),
+       lwd = 1.5, cex = 0.7, bty = "n", title = "Alpha")
+abline(v = opt_lambda, lty = 2, col = nature_red)
 dev.off()
 
-# 3D deviance surface
-deviance_mat <- as.matrix(as.data.frame.matrix(
-  xtabs(deviance ~ alpha + lambda, data = as.data.frame(parameter$info))))
-deviance_plot <- plotly::plot_ly(
-  x = ~parameter$info$alpha, y = ~parameter$info$lambda, z = ~deviance_mat) %>%
-  add_surface(colorscale = list(
-    c(0, nature_red), c(0.5, nature_orange), c(1, nature_blue)))
-htmlwidgets::saveWidget(deviance_plot,
-  file.path(OUT_DIR, "deviance_plot.html"))
+# 3D deviance surface (using first few alphas for surface plot)
+if (length(cv_results) >= 3) {
+  surf_data <- do.call(rbind, lapply(names(cv_results), function(a_name) {
+    f <- cv_results[[a_name]]
+    data.frame(alpha = as.numeric(a_name), lambda = f$lambda, deviance = f$cvm)
+  }))
+  deviance_plot <- plotly::plot_ly(
+    x = ~surf_data$alpha, y = ~surf_data$lambda, z = ~surf_data$deviance) %>%
+    add_markers(color = ~surf_data$deviance,
+                colors = colorRamp(c(nature_blue, nature_orange, nature_red)))
+  htmlwidgets::saveWidget(deviance_plot,
+    file.path(OUT_DIR, "deviance_plot.html"))
+}
 message("  ✓ 3D deviance surface")
 
 # ── 3.4 Fit final Elastic Net Cox model ─────────────────────────────────────
@@ -365,13 +401,13 @@ cv.glmfit <- cv.glmnet(
   y = Surv(survdata$OS, survdata$status),
   x = as.matrix(survdata[, 5:ncol(survdata)]),
   family = "cox", standardize = TRUE,
-  alpha = parameter$opt.alpha, nlambda = 50)
+  alpha = opt_alpha, nlambda = 50)
 
 # Plot: Elastic Net deviance curve
 cairo_pdf(file.path(OUT_DIR, "Fig_3b_elastic_net_deviance.pdf"), width = 6, height = 5)
 plot(cv.glmfit, main = "Elastic Net Regularized CoxPH Regression",
      xlab = expression(log(lambda)))
-abline(h = parameter$opt.error, lty = 3, col = nature_red)
+abline(h = opt_error, lty = 3, col = nature_red)
 dev.off()
 message("  ✓ Elastic Net deviance curve")
 
