@@ -483,11 +483,18 @@ Train <- Train[, colnames(Train) %in% c("id", "OS", "stage", "status", nonozero.
 Test  <- Test[, colnames(Test) %in% c("id", "OS", "stage", "status", nonozero.coef$ENSG_id)]
 
 # Rename ENSG columns to gene symbols for readable figures
-ensg_cols <- intersect(colnames(Train), nonozero.coef$ENSG_id)
-name_map  <- setNames(nonozero.coef$Symbol[match(ensg_cols, nonozero.coef$ENSG_id)], ensg_cols)
-name_map  <- name_map[!is.na(names(name_map)) & name_map != ""]
-colnames(Train)[colnames(Train) %in% names(name_map)] <- name_map[colnames(Train)[colnames(Train) %in% names(name_map)]]
-colnames(Test)[colnames(Test) %in% names(name_map)]   <- name_map[colnames(Test)[colnames(Test) %in% names(name_map)]]
+ensg_in_data <- intersect(colnames(Train), lncRNA_v22$ENSG_id)
+sym_lookup   <- setNames(lncRNA_v22$Symbol[match(ensg_in_data, lncRNA_v22$ENSG_id)], ensg_in_data)
+sym_lookup   <- sym_lookup[!is.na(names(sym_lookup)) & !is.na(sym_lookup) & sym_lookup != ""]
+# Only rename columns whose symbol exists and doesn't collide with existing names
+to_rename <- sym_lookup[names(sym_lookup) %in% colnames(Train)]
+# Avoid collisions: skip if symbol already exists as another column name
+to_rename <- to_rename[!to_rename %in% setdiff(colnames(Train), names(to_rename))]
+if (length(to_rename) > 0) {
+  colnames(Train)[match(names(to_rename), colnames(Train))] <- unname(to_rename)
+  colnames(Test)[match(names(to_rename), colnames(Test))]   <- unname(to_rename)
+  message(sprintf("  Renamed %d ENSG columns to gene symbols", length(to_rename)))
+}
 message(sprintf("  Train=%d  Test=%d  Features=%d", nrow(Train), nrow(Test), ncol(Train) - 4))
 
 # ── 3.8 Multivariate Cox PH (stepwise) ──────────────────────────────────────
