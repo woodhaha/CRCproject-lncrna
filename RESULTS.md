@@ -19,7 +19,36 @@
 
 ---
 
-## 2. Classification Performance
+## 2. Clinical Baseline — TCGA-COAD Cohort (n=428)
+
+| Characteristic | Overall | Alive (78.0%) | Dead (22.0%) | P-value |
+|---------------|---------|---------------|--------------|---------|
+| **Age (years), mean ± SD** | 66.7 ± 13.0 | 65.8 ± 12.8 | 69.7 ± 13.4 | **0.015** |
+| Age, median (range) | 68 (31–90) | 67 (31–90) | 71 (38–88) | — |
+| Male / Female | 228 / 200 | 170 / 164 | 58 / 36 | 0.081 |
+| **OS (days), mean ± SD** | 891 ± 786 | 940 ± 802 | 717 ± 703 | **0.009** |
+| OS, median (range) | 676 (6–4,502) | 735 (6–4,502) | 518 (14–3,147) | — |
+| **Stage I** | 73 (17.1%) | 67 (20.1%) | 6 (6.4%) | **<0.001** |
+| **Stage II** | 168 (39.3%) | 140 (41.9%) | 28 (29.8%) | |
+| **Stage III** | 126 (29.4%) | 96 (28.7%) | 30 (31.9%) | |
+| **Stage IV** | 61 (14.3%) | 31 (9.3%) | 30 (31.9%) | |
+| **CEA (ng/ml), mean** | 38.4 | 21.0 | 115.7 | 0.119 |
+| CEA, median | 3.0 | 2.7 | 6.8 | — |
+| Venous invasion | 89/372 (23.9%) | 69/296 (23.3%) | 20/76 (26.3%) | 0.647 |
+| Lymphatic invasion | 151/387 (39.0%) | 118/306 (38.6%) | 33/81 (40.7%) | 0.750 |
+| Perineural invasion | 43/172 (25.0%) | 33/140 (23.6%) | 10/32 (31.3%) | 0.456 |
+
+**Key observations:**
+- **Stage is the dominant prognostic factor** (p<0.001) — Stage IV patients are 3× more likely to be in the deceased group (31.9% vs 9.3%)
+- **Age** is significantly higher in deceased patients (69.7 vs 65.8 years, p=0.015)
+- **CEA** shows a strong trend (mean 115.7 vs 21.0 ng/ml in deceased vs alive) but is not statistically significant (p=0.119) due to high variance and missing data (36% missing)
+- **Perineural invasion** has 59.8% missing data, severely limiting its utility as a predictor
+- Venous and lymphatic invasion show no significant differences between alive and deceased groups
+- Statistical tests: t-test for continuous variables, chi-square for categorical
+
+---
+
+## 3. Classification Performance
 
 ### Tumor vs Normal Diagnostic Models
 
@@ -39,16 +68,16 @@
 
 ---
 
-## 3. Survival Analysis
+## 4. Survival Analysis
 
-### 3.1 Univariate Cox Regression
+### 4.1 Univariate Cox Regression
 
 - **799 lncRNAs** screened by univariate Cox PH
 - **72 lncRNAs** significantly associated with OS (p < 0.05)
 - **60 risk factors** (HR > 1) — higher expression → worse survival
 - **12 protective factors** (HR < 1) — higher expression → better survival
 
-### 3.2 Top 10 Prognostic lncRNAs (by p-value)
+### 4.2 Top 10 Prognostic lncRNAs (by p-value)
 
 | Rank | lncRNA | HR | 95% CI | p-value | Direction |
 |------|--------|-----|--------|---------|-----------|
@@ -63,7 +92,7 @@
 | 9 | LINC00174 | 1.40 | 1.12–1.73 | 0.00315 | Risk ↑ |
 | 10 | EIF3J-AS1 | 1.70 | 1.20–2.53 | 0.00356 | Risk ↑ |
 
-### 3.3 Protective lncRNAs (HR < 1, significant)
+### 4.3 Protective lncRNAs (HR < 1, significant)
 
 | lncRNA | HR | 95% CI | p-value |
 |--------|-----|--------|---------|
@@ -71,7 +100,7 @@
 | RP11-277P12.20 | 0.87 | 0.80–0.96 | 0.00399 |
 | LINC00261 | 0.90 | 0.82–0.98 | 0.02200 |
 
-### 3.4 Differential Expression Patterns
+### 4.4 Differential Expression Patterns
 
 | Direction | Count | Interpretation |
 |-----------|-------|----------------|
@@ -80,7 +109,7 @@
 
 ---
 
-## 4. Elastic Net Feature Selection
+## 5. Elastic Net Feature Selection
 
 ```
 Optimal parameters: α = 0.200  λ = 0.230  Min deviance = 2.588
@@ -92,7 +121,7 @@ Optimal parameters: α = 0.200  λ = 0.230  Min deviance = 2.588
 
 ---
 
-## 5. Random Forest Survival
+## 6. Random Forest Survival
 
 | Parameter | Value |
 |-----------|-------|
@@ -106,7 +135,7 @@ RF showed moderate overfitting (7.2% OOB error gap between train/test), consiste
 
 ---
 
-## 6. Biological Relevance
+## 7. Biological Relevance
 
 The identified lncRNAs have established cancer biology roles:
 
@@ -120,7 +149,7 @@ The identified lncRNAs have established cancer biology roles:
 
 ---
 
-## 7. Output Files
+## 8. Output Files
 
 | Type | Count | Location |
 |------|-------|----------|
@@ -154,7 +183,7 @@ The identified lncRNAs have established cancer biology roles:
 
 ---
 
-## 8. Reproducibility
+## 9. Reproducibility
 
 ```bash
 # Reproduce all results
