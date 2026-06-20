@@ -820,67 +820,87 @@ if (has.ggRF) {
 }
 message("  ✓ RF variable dependence plots")
 
-# ── 4.7 Brier Score & C-index ───────────────────────────────────────────────
-# NOTE: pec package API changed; wrap in tryCatch to continue if unavailable
+# ── 4.7 Brier Score & C-index (riskRegression::Score API) ──────────────────
+pecdata_train <- rfdata_train
+pecdata_test  <- rfdata_test
+model_colors <- c("CoxPH (stage)" = nature_grey,
+                  "CoxPH (+lncRNA)" = nature_blue,
+                  "Random Forest" = nature_red)
+
+# Define models for prediction error estimation
+Models_train <- list(
+  "CoxPH (stage)" = coxph(Surv(OS, status) ~ stage, data = pecdata_train, x = TRUE, y = TRUE),
+  "CoxPH (+lncRNA)" = coxph(Surv(OS, status) ~ ., data = pecdata_train, x = TRUE, y = TRUE),
+  "Random Forest" = rfsrc)
+
+Models_test <- list(
+  "CoxPH (stage)" = coxph(Surv(OS, status) ~ stage, data = pecdata_test, x = TRUE, y = TRUE),
+  "CoxPH (+lncRNA)" = coxph(Surv(OS, status) ~ ., data = pecdata_test, x = TRUE, y = TRUE),
+  "Random Forest" = rfsrc)
+
+# Convert OS from years back to days for eval.times compatibility
+eval_days <- seq(0, 3650, 30)
+
+# ── Brier Score via riskRegression::Score ──────────────────────────────────
 tryCatch({
-  pecdata_train <- rfdata_train
-  pecdata_test  <- rfdata_test
-
-  Models_train <- list(
-    "CoxPH (stage)" = coxph(Surv(OS, status) ~ stage, data = pecdata_train, x = TRUE, y = TRUE),
-    "CoxPH (+lncRNA)" = coxph(Surv(OS, status) ~ ., data = pecdata_train, x = TRUE, y = TRUE),
-    "Random Forest" = rfsrc)
-
-  Bier_train <- pec::pec(Models_train,
-    formula = Surv(OS, status) ~ ., data = pecdata_train,
+  score_train <- riskRegression::Score(Models_train,
+    formula = Surv(OS, status) ~ 1, data = pecdata_train,
+    metrics = "brier", times = eval_days / 365,  # convert days→years
     cens.model = "marginal", splitMethod = "bootcv",
-    M = round(nrow(pecdata_train) * 0.6), B = 100,
-    keep.index = TRUE, multiSplitTest = FALSE, confInt = FALSE,
-    exact = TRUE, verbose = FALSE, maxtime = 3000,
-    eval.times = seq(0, 3650, 30))
+    B = 100, M = round(nrow(pecdata_train) * 0.6),
+    verbose = FALSE)
 
-  Models_test <- list(
-    "CoxPH (stage)" = coxph(Surv(OS, status) ~ stage, data = pecdata_test, x = TRUE, y = TRUE),
-    "CoxPH (+lncRNA)" = coxph(Surv(OS, status) ~ ., data = pecdata_test, x = TRUE, y = TRUE),
-    "Random Forest" = rfsrc)
-
-  Bier_test <- pec::pec(Models_test,
-    formula = Surv(OS, status) ~ ., data = pecdata_test,
+  score_test <- riskRegression::Score(Models_test,
+    formula = Surv(OS, status) ~ 1, data = pecdata_test,
+    metrics = "brier", times = eval_days / 365,
     cens.model = "marginal", splitMethod = "bootcv",
-    M = round(nrow(pecdata_test) * 0.6), B = 100,
-    keep.index = TRUE, multiSplitTest = FALSE, confInt = FALSE,
-    exact = TRUE, verbose = FALSE, maxtime = 3000,
-    eval.times = seq(0, 3650, 30))
+    B = 100, M = round(nrow(pecdata_test) * 0.6),
+    verbose = FALSE)
 
-  model_colors <- c(nature_grey, nature_blue, nature_red)
-
+  # Plot Brier score with Nature colors
   for (label in c("train", "test")) {
-    obj <- if (label == "train") Bier_train else Bier_test
+    sc  <- if (label == "train") score_train else score_test
+    bd  <- as.data.frame(sc$Brier$score)
+    bd$times_days <- bd$times * 365  # convert years→days for x-axis
     cairo_pdf(file.path(OUT_DIR, sprintf("Fig_12_brier_%s.pdf", label)),
               width = 6, height = 5)
-    plot(obj, smooth = TRUE, lwd = 1.5, legend.cex = 0.8,
-         type = "s", add.refline = TRUE,
-         xlim = c(0, 3650), ylim = c(0, 0.5),
-         xlab = "Time (days)", ylab = "Prediction error (Brier score)",
-         col = model_colors)
+    p <- ggplot(bd, aes(x = times_days, y = Brier, color = model, fill = model)) +
+      geom_line(size = 1.1) +
+      geom_ribbon(aes(ymin = lower, ymax = upper), alpha = 0.08, color = NA) +
+      scale_color_manual(values = model_colors) +
+      scale_fill_manual(values = model_colors) +
+      labs(title = paste("Prediction Error (Brier Score) —", label),
+           y = "Brier Score", x = "Time (days)") +
+      ylim(0, 0.5) + xlim(0, 3650) +
+      theme_pubr() + theme(legend.position = "bottom",
+                            plot.title = element_text(size = 13, hjust = 0.5))
+    print(p)
     dev.off()
   }
+  message("  ✓ Brier score plots")
+}, error = function(e) {
+  message(sprintf("  ⚠ Brier score skipped: %s", e$message))
+})
 
-  # C-index
-  Cindex_train <- pec::cindex(Models_train,
-    formula = Surv(OS, status) ~ ., data = pecdata_train,
-    eval.times = seq(0, 3650, 30),
-    splitMethod = "bootcv", M = round(nrow(pecdata_train) * 0.6),
-    cens.model = "marginal", B = 100, maxtime = 3000)
+# ── C-index via pec::cindex ───────────────────────────────────────────────
+tryCatch({
+  ci_train <- pec::cindex(Models_train,
+    formula = Surv(OS, status) ~ 1, data = pecdata_train,
+    eval.times = eval_days / 365, cens.model = "marginal",
+    splitMethod = "bootcv", B = 100,
+    M = round(nrow(pecdata_train) * 0.6),
+    verbose = FALSE, maxtime = max(eval_days / 365))
 
-  Cindex_test <- pec::cindex(Models_test,
-    formula = Surv(OS, status) ~ ., data = pecdata_test,
-    eval.times = seq(0, 3650, 30),
-    splitMethod = "bootcv", M = round(nrow(pecdata_test) * 0.6),
-    cens.model = "marginal", B = 100, maxtime = 3000)
+  ci_test <- pec::cindex(Models_test,
+    formula = Surv(OS, status) ~ 1, data = pecdata_test,
+    eval.times = eval_days / 365, cens.model = "marginal",
+    splitMethod = "bootcv", B = 100,
+    M = round(nrow(pecdata_test) * 0.6),
+    verbose = FALSE, maxtime = max(eval_days / 365))
 
+  # Plot C-index with Nature colors (pec::cindex plot method)
   for (label in c("train", "test")) {
-    obj <- if (label == "train") Cindex_train else Cindex_test
+    obj <- if (label == "train") ci_train else ci_test
     cairo_pdf(file.path(OUT_DIR, sprintf("Fig_13_cindex_%s.pdf", label)),
               width = 6, height = 5)
     plot(obj, smooth = TRUE, lwd = 1.5, legend.cex = 0.8,
@@ -890,9 +910,9 @@ tryCatch({
          col = model_colors)
     dev.off()
   }
-  message("  ✓ Brier score & C-index plots")
+  message("  ✓ C-index plots")
 }, error = function(e) {
-  message(sprintf("  ⚠ Brier/C-index skipped (pec error): %s", e$message))
+  message(sprintf("  ⚠ C-index skipped: %s", e$message))
 })
 
 ###############################################################################
