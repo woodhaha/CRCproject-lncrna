@@ -800,17 +800,22 @@ if (has.ggRF) {
   )
   dev.off()
 } else {
-  # Base R fallback: plot.variable from randomForestSRC
-  cairo_pdf(file.path(OUT_DIR, "Fig_10_rf_stage_survival.pdf"), width = 6, height = 5)
-  plot.variable(rfsrc, xvar.names = "stage", time = c(1, 3, 5),
-                surv.type = "surv", main = "Survival by Stage")
-  dev.off()
+  # Base R fallback: plot.variable with single time point (v3.6+ restriction)
+  for (t in c(1, 3, 5)) {
+    cairo_pdf(file.path(OUT_DIR, sprintf("Fig_10_rf_stage_survival_%dy.pdf", t)),
+              width = 6, height = 5)
+    plot.variable(rfsrc, xvar.names = "stage", time = t,
+                  surv.type = "surv", main = paste("Survival by Stage at", t, "Year(s)"))
+    dev.off()
+  }
 
   cairo_pdf(file.path(OUT_DIR, "Fig_11_rf_lncrna_survival.pdf"), width = 8, height = 6)
   lnc_vars <- intersect(cox_vip_list, colnames(rfsrc$xvar))
-  plot.variable(rfsrc, xvar.names = lnc_vars, time = c(1, 3, 5),
-                surv.type = "surv", partial = TRUE,
-                main = "LncRNA Expression-Dependent Survival")
+  if (length(lnc_vars) > 0) {
+    plot.variable(rfsrc, xvar.names = lnc_vars[1], time = 3,
+                  surv.type = "surv", partial = TRUE,
+                  main = "LncRNA-Dependent Survival (3 Year)")
+  }
   dev.off()
 }
 message("  ✓ RF variable dependence plots")
