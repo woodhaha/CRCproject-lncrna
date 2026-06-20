@@ -923,7 +923,6 @@ write.csv(classification_data, file.path(OUT_DIR, "Machine_learning_data.csv"),
 
 # ── 5.2 Feature distribution plots (Nature style) ───────────────────────────
 cairo_pdf(file.path(OUT_DIR, "Fig_S4_feature_density.pdf"), width = 10, height = 8)
-transparentTheme(trans = .9)
 featurePlot(x = classification_data[, -1], y = classification_data$group,
             plot = "density", center = FALSE, scale = FALSE,
             main = "Feature density distribution",
