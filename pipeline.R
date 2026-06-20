@@ -481,6 +481,13 @@ Test  <- survdata[-trainIndex, ] %>% dplyr::select(-group)
 
 Train <- Train[, colnames(Train) %in% c("id", "OS", "stage", "status", nonozero.coef$ENSG_id)]
 Test  <- Test[, colnames(Test) %in% c("id", "OS", "stage", "status", nonozero.coef$ENSG_id)]
+
+# Rename ENSG columns to gene symbols for readable figures
+ensg_cols <- intersect(colnames(Train), nonozero.coef$ENSG_id)
+name_map  <- setNames(nonozero.coef$Symbol[match(ensg_cols, nonozero.coef$ENSG_id)], ensg_cols)
+name_map  <- name_map[!is.na(names(name_map)) & name_map != ""]
+colnames(Train)[colnames(Train) %in% names(name_map)] <- name_map[colnames(Train)[colnames(Train) %in% names(name_map)]]
+colnames(Test)[colnames(Test) %in% names(name_map)]   <- name_map[colnames(Test)[colnames(Test) %in% names(name_map)]]
 message(sprintf("  Train=%d  Test=%d  Features=%d", nrow(Train), nrow(Test), ncol(Train) - 4))
 
 # ── 3.8 Multivariate Cox PH (stepwise) ──────────────────────────────────────
