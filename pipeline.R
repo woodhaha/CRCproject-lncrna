@@ -352,7 +352,7 @@ for (a in alpha_grid) {
     }
   }
 }
-stopCluster(cl)
+stopCluster(cl); registerDoSEQ()
 
 opt_alpha  <- best_alpha
 opt_lambda <- best_lambda
@@ -974,7 +974,7 @@ RF <- train(group ~ ., data = train, method = "ranger", tuneLength = 10,
   trControl = custom, metric = "ROC",
   tuneGrid = expand.grid(mtry = 1:(ncol(train) - 1),
                           splitrule = "gini", min.node.size = seq(1, 10)))
-stopCluster(cl)
+stopCluster(cl); registerDoSEQ()
 message(sprintf("  Random Forest: best mtry=%d", RF$bestTune$mtry))
 
 # ── 5.7 SVM ─────────────────────────────────────────────────────────────────
@@ -985,7 +985,7 @@ SVM <- train(group ~ ., data = train, method = "svmRadial",
   tuneLength = 10, trControl = custom, metric = "ROC",
   tuneGrid = expand.grid(sigma = seq(0, 1, length = 10),
                           C = seq(0.1, 2, length = 10)))
-stopCluster(cl)
+stopCluster(cl); registerDoSEQ()
 message(sprintf("  SVM: best sigma=%.2f C=%.2f",
                 SVM$bestTune$sigma, SVM$bestTune$C))
 
@@ -996,7 +996,7 @@ set.seed(12345)
 NNET <- train(group ~ ., data = train, method = "nnet", tuneLength = 10,
   trControl = custom, metric = "ROC",
   tuneGrid = expand.grid(size = 1:15, decay = seq(0.1, 1, length = 5)))
-stopCluster(cl)
+stopCluster(cl); registerDoSEQ()
 message(sprintf("  Neural Network: best size=%d decay=%.2f",
                 NNET$bestTune$size, NNET$bestTune$decay))
 
