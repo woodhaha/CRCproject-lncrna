@@ -1,0 +1,83 @@
+flowchart TD
+    %% 发现阶段
+    subgraph Discovery_Phase ["发现阶段 (Discovery Phase)"]
+        direction TB
+        A1["TCGA-COAD<br>(Non-tumor = 41, Tumor = 456 & 441 clinical data)"]
+        A2["TCGA-GTEX<br>(Non-tumor = 349, Tumor = 290)"]
+        
+        B["log2(FPKM+0.001) Normalization &<br>Filter (Exp < 0.1 in > 60% samples)"]
+        
+        C1["TCGA-COAD Branch:<br>(13158 genes remained, 799 lncRNAs selected)"]
+        C2["TCGA-GTEX Branch:<br>(15255 genes remained, 1298 lncRNAs selected)"]
+        
+        D1["Survival Analysis<br>(Kaplan-Meier & logrank & univariate Coxph)"]
+        D2["Differential Gene Expression Analysis<br>(limma)"]
+        
+        E["Intersection: 459 lncRNAs"]
+        F["Feature Selection:<br>Elastic Net Regularized Coxph model"]
+        G["Final Biomarkers: 12 lncRNAs selected"]
+    end
+
+    %% 训练阶段
+    subgraph Training_Phase ["训练阶段 (Training Phase)"]
+        direction TB
+        H1["Survival Prediction Model<br>(Prognostic Prediction)"]
+        H2["Classification Model<br>(Diagnostic Prediction)"]
+        
+        %% 预后算法
+        I1["COXPH"]
+        I2["RFSM"]
+        
+        %% 诊断算法
+        J1["LogisReg"]
+        J2["ElasticNetReg"]
+        J3["NeuralNet"]
+        J4["SVM"]
+        J5["RF"]
+    end
+
+    %% 测试阶段
+    subgraph Testing_Phase ["测试阶段 (Testing Phase)"]
+        K["Independent Testing Set Validation<br>& Performance Evaluation"]
+    end
+
+    %% 逻辑连接：发现阶段
+    A1 --> B
+    A2 --> B
+    B --> C1
+    B --> C2
+    C1 --> D1
+    C2 --> D2
+    D1 --> E
+    D2 --> E
+    E --> F
+    F --> G
+    
+    %% 逻辑连接：过渡到训练
+    G --> H1
+    G --> H2
+    
+    %% 逻辑连接：算法并行训练
+    H1 --> I1
+    H1 --> I2
+    H2 --> J1
+    H2 --> J2
+    H2 --> J3
+    H2 --> J4
+    H2 --> J5
+    
+    %% 逻辑连接：过渡到测试
+    I1 --> K
+    I2 --> K
+    J1 --> K
+    J2 --> K
+    J3 --> K
+    J4 --> K
+    J5 --> K
+
+    %% 顶刊扁平化配色方案
+    style Discovery_Phase fill:#f4f7fc,stroke:#4a90e2,stroke-width:2px,stroke-dasharray: 5 5
+    style Training_Phase fill:#fffbf2,stroke:#f5a623,stroke-width:2px,stroke-dasharray: 5 5
+    style Testing_Phase fill:#f1fbf4,stroke:#2ecc71,stroke-width:2px,stroke-dasharray: 5 5
+    style G fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,font-weight:bold
+    style K fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,font-weight:bold

@@ -1,0 +1,559 @@
+\documentclass[fleqn,10pt]{wlscirep}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+\usepackage{booktabs,dcolumn}
+\usepackage{color, colortbl}
+\usepackage{graphicx}
+\definecolor{Blue}{rgb}{0.31,  0.51,  0.75}
+\definecolor{LightBlue}{rgb}{0.81,  .85,  .91}
+
+
+\bibliographystyle{naturemag-doi}
+
+\title{ Discovery of Diagnostic and Prognostic long non-coding RNA Biomarkers in Patients with Colorectal Cancer Using Machine Learning Algorithms.}
+
+\author[1]{Zhuha Zhou}
+\author[1]{Ximei Ma}
+\author[2]{QiuQiang Zhang}
+\author[3]{Zhuxian Zhou}
+\author[4]{ Ye Feng}
+\author[1*]{Guanyu Wang}
+\affil[1] {Department of General Surgery, Sir Run Run Shaw Hospital, School of Medicine, Zhejiang University, East Qingchun Road 3, 310016, Hangzhou, Zhejiang, China.}
+\affil[2] {Division of Hepatobiliary and Pancreatic Surgery, Second Affiliated Hospital, School of Medicine, Zhejiang University, Jiefang Road 88, 310009, Hangzhou, China. }
+\affil[3] {Center for Bionanoengineering and Key Laboratory of Biomass Chemical Engineering of Ministry of Education, College of Chemical and Biological Engineering, Zhejiang University, Zheda Road 38, 310027 Hangzhou, China.}
+\affil[4] {Institute of Translational Medicine, School of Medicine, Zhejiang University, East Qingchun Road 3, 310016, Hangzhou, Zhejiang, China.}
+\affil[*] {Correspondence and requests for materials should be addressed to (email: wangguanyu@zju.edu.cn)}
+
+\begin{abstract}
+Colorectal cancer (CRC) is among the most frequently diagnosed and fatal cancers worldwide. However, the discovery of molecular biomarkers and therapeutic targets for early detection and effective treatment of CRC remains challenging. Deregulated lncRNAs (long non-coding RNAs) has been implicated in the development and progression of various cancer types, and significantly correlates with patient survival. In this study, we used machine learning algorithms to identify lncRNAs as potential biomarkers for CRC diagnosis and time dependent survival prediction. We demonstrated that machine learning can play a potential role for investigating CRC mechanisms and discovering predictive biomarkers. We found that Cox proportional hazards (Coxph) relative risk score model based on the lncRNAs expression including RP11-440D17.3, EIF3J-AS1, TNRC6C-AS1, MIR210HG, AC113189.5, LINC00261, CTB-25B13.12, AC114730.3 and CRC stage parameter was capable of stratifying patients' risk group, and served as a suitable metric for time dependent risk prediction, the Area Under Curve (AUC) stably converged to about 0.725 after 8 years in the training and testing data. The performance of classification models including Support Vector Machine (SVM), random forest and neural network based on the above-mentioned lncRNAs are highly sensitive and specific in distinguishing between tumor and no-tumor samples with significant p-values in both training and testing data sets.
+\end{abstract}
+
+\begin{document}
+\flushbottom
+\maketitle
+\thispagestyle{empty}
+
+\section*{Introduction}
+Colorectal cancer (CRC) is the third most common cancer worldwide and it is the second leading cause of cancer associated mortality in developed countries. Clinically, CRC is mainly diagnosed at advanced stages when patients suffered from noticeable clinical symptoms, and metastatic tumors have already spread to adjacent lymph nodes or other organs. The 5-years survival rates of CRC are  91.1\%,  69.8\% and 11\% for localized, regional, and distant stages, respectively, which has not been greatly improved in recent years\cite{RN1,RN2}. A better understanding of the molecular mechanisms underlying CRC progression is quintessential to establish more effective approaches for early detection, diagnosis and therapy.
+
+Long non-coding RNAs (LncRNAs) are versatile genetic and epigenetic regulators which play crucial roles in cancer hallmarks including proliferation, invasion, metastasis and drug resistance, et al\cite{RN3}. Emerging evidences have verified that several lncRNAs involve in CRC through complex mechanisms\cite{RN4,RN5,RN6}. LncRNAs have been recognized as promising biomarkers and  therapeutic targets for clinical applications\cite{RN7,RN8,RN9}. Discovering and verifying disease related lncRNAs  by traditional biological experiment is  time consuming and less efficient. Recently, it has been very favored to use computational models to predict potential disease associated LncRNAs based on large scaled high-throughput sequencing data. The Cancer Genome Atlas (TCGA)\cite{RN10} and Genotype Tissue Expression (GTEx)\cite{RN11} projects make it possible for publicly accessible of RNA sequencing data of various cancers and normal samples, providing a Godzilla gold mine for cancer research. More recently, the TOIL project of University of California Santa Cruz has merged the TCGA and GTEx raw expression data based on a standard pipeline and making it more comparable and minimizing differences from varied sources. These advancements make it more powerful to discovery gene expression pattern between cancer and normal samples\cite{RN12}.
+
+Machine learning algorithms is an incredibly powerful mathematic tool to make predictions based on a large amounts of known properties that was learned from the training data, realizing the discovery of previously unknown properties hiding in the new data \cite{RN13,RN14}. Supervised classification algorithms can be employed to identify between cancerous and normal tissues, and to classify cancer subgroups based on certain molecular features, such as gene expression profiles\cite{RN15}. The caret package provides an uniform interface of functions that attempts to streamline the process of creating predictive models, and to standardize the pipeline for common tasks, such as hyperparameters tuning and feature selection\cite{RN16}. Zhang, X. et al.\cite{RN17} developed machine learning based classifier named CRlncRC for cancer related LncRNAs, which integrating multiple optimizing algorithms to enhance model performance with significant prediction sensitivity and accuracy. In this study, we endeavored to discover lncRNAs which might have diagnostic and prognostic merits in CRC patients and for future real-world implementation. We designed a computational pipeline to characterize the lncRNA expression profiles on a relatively large number of CRC samples, and using cross validation strategy for feature selection. By utilizing several conventional machine learning algorithms, we confirmed that those strong classifiers such as neural network random forest and support vector machine (SVM) archiving high accuracy in distinguishing tumor from normal tissue, while time dependent survival risk prediction presented with acceptable fluctuation. The discovered lncRNAs might have diagnostic and prognostic value for CRC patients.
+
+\section*{Results}
+
+\subsection*{Differential gene expression, survival analysis and lncRNA feature selection }
+
+To comprehensively detect the candidate feature lncRNAs, we developed a pipeline as illustrated in Fig.\ref{Fig1}. 460 lncRNAs that satisfied our analysis pipeline were further filtered by elastic net regularized Coxph regression model via global optimization with tenfold cross validation, which is a linear combination of the least absolute shrinkage and selection operator (lasso) $L_{1}$ and $L_{2}$ ridge penalties-based feature selection strategy. Finally, 17 feature lncRNAs were selected  with optimal hyperparameters ($\alpha =0.172$, $\lambda=0.267$) accompanied with minimal cross validated deviance =12.354. The hyperparameter tuning process was illustrated in Fig.\ref{Fig2}. The results of differential gene expression analysis of the candidate lncRNAs were presented by $\log_{2}$ Fold Change ($\log_{2}$FC) (Tumor minus Non-Tumor) with Benjamini-Hochberg adjusted p-values namely False Discovery Rate (FDR), while the univariate Coxph analysis results presented by Hazard Ratio (HR), 95\% up and low Confidence Interval (CI) and p-values with Wald test, and corresponding log-rank test p-values were listed in Tab.\ref{Tab1} and depicted in Fig.S1 (a)  Most of the lncRNAs were significantly downregulated in tumor associated with increased HR, while AC114730.3 and LINC00261 (a putative negative regulator of cell growth through promoting differentiation and apoptosis) were  significantly upregulated with decreased HR.
+
+\begin{figure}[!htp]
+\centering
+\includegraphics[width=0.8\textwidth, keepaspectratio]{Figure-1-Guanyu}
+\caption{Study flowchart: The TOIL recomputed TCGA-GTEx samples were already $\log_{2}(FPKM+0.001)$ normalized, and it doesn't contain all the TCGA-COAD clinical follow-up survival information. The original TCGA-COAD project only contains 41 adjacent non-tumor samples, and not statistically powerful to discriminate the differentially expressed gene pattern between cancer and normal samples. We constructed two survival prediction model for prognostic prediction, and five classification models for diagnostic prediction. }
+\label{Fig1}
+\end{figure}
+
+\begin{table}[!htp]
+  \setlength\tabcolsep{3pt}
+  \centering
+  \extrarowheight=\aboverulesep
+    \addtolength{\extrarowheight}{\belowrulesep}
+    \aboverulesep=0pt
+    \belowrulesep=0pt
+  \caption{Results of differential gene expression and survival analysis for the 17 candidate lncRNAs.}
+    \begin{tabular}{lccccccc}
+    \toprule[2pt]
+   \rowcolor{Blue} \textbf{Symbol} & \textbf{Ensemble ID} &\textbf{$\log_{2}$FC}
+     &\textbf{ FDR} &\textbf{ HR }   &\textbf{ CI}    & \textbf{p-value} & \textbf{logrank p-value }\\
+    \midrule[1pt]
+   ARRDC1-AS1 & ENSG00000203993.4 & -0.745 & 0.000 & 1.80& (1.21-2.65) & 0.003 & 0.008 \\
+    \specialrule{0em}{.02em}{.02em}
+   \rowcolor{LightBlue}  EIF3J-AS1 & ENSG00000179523.4 & -0.387 & 0.000 & 1.70& (1.20-2.53) & 0.004 & 0.037 \\
+     \specialrule{0em}{.02em}{.02em}
+  CTB-25B13.12 & ENSG00000267317.2 & 0.014 & 0.888 & 1.70   & (1.28-2.36) & 0.000 & 0.002 \\
+     \specialrule{0em}{.02em}{.02em}
+    \rowcolor{LightBlue}  AP006621.5 & ENSG00000255284.1 & -1.114 & 0.000 & 1.60   & (1.22-2.01) & 0.000 & 0.134 \\
+ \specialrule{0em}{.02em}{.02em}
+  RP11-644F5.11 & ENSG00000258056.2 & -0.327 & 0.001 & 1.60   & (1.15-2.34) & 0.007 & 0.037 \\
+    \specialrule{0em}{.03em}{.03em}
+     \rowcolor{LightBlue} AC113189.5 & ENSG00000233223.2 & -0.734 & 0.000 & 1.50   & (1.20-1.92) & 0.001 & 0.218 \\
+ \specialrule{0em}{.02em}{.02em}
+RP11-44M6.7 & ENSG00000274272.1 & -1.254 & 0.000  & 1.50  & (1.18-2.02) & 0.002 & 0.010 \\
+ \specialrule{0em}{.02em}{.02em}
+     \rowcolor{LightBlue} LINC00174 & ENSG00000179406.6 & -1.016 & 0.000  & 1.40  & (1.11-1.72) & 0.004 & 0.050 \\
+   \specialrule{0em}{.02em}{.02em}
+  TNRC6C-AS1 & ENSG00000204282.4 & -0.140 & 0.213 & 1.40  & (1.10-1.78) & 0.006 & 0.018 \\
+ \specialrule{0em}{.02em}{.02em}
+   \rowcolor{LightBlue}   MIR210HG & ENSG00000247095.2 & 0.129 & 0.352 & 1.40  & (1.17-1.68) & 0.000 & 0.006 \\
+    \specialrule{0em}{.03em}{.03em}
+     RP11-199F11.2 & ENSG00000262251.1 & 0.244 & 0.022 & 1.40  & (1.10-1.78) & 0.006& 0.025 \\
+ \specialrule{0em}{.02em}{.02em}
+     \rowcolor{LightBlue} RP5-1021I20.1 & ENSG00000259065.1 & -1.029& 0.000  & 1.30   & (1.07-1.52) & 0.007 & 0.007 \\
+     \specialrule{0em}{.03em}{.03em}
+  RP11-268J15.5 & ENSG00000116883.8 & -0.409 & 0.001 & 1.20   & (1.06-1.38) & 0.005 & 0.002 \\
+ \specialrule{0em}{.02em}{.02em}
+    \rowcolor{LightBlue}  AC156455.1 & ENSG00000256546.1 & -0.948 & 0.000     & 1.20   & (1.05-1.35) & 0.007 & 0.089 \\
+ \specialrule{0em}{.02em}{.02em}
+   RP11-440D17.3 & ENSG00000272913.1 & -0.232 & 0.152 & 1.10   & (0.10-1.19) & 0.064 & 0.200 \\
+  \specialrule{0em}{.02em}{.02em}
+    \rowcolor{LightBlue}  LINC00261 & ENSG00000259974.2 & 3.045& 0.000  & 0.90   & (0.82-0.98) & 0.022 & 0.035 \\
+ \specialrule{0em}{.02em}{.02em}
+   AC114730.3 & ENSG00000224272.2 & 1.688 & 0.000   & 0.87  & (0.79-0.97) & 0.012 & 0.074 \\
+    \bottomrule[1.5pt]
+    \end{tabular}
+  \label{Tab1}
+\end{table}
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=1\columnwidth, keepaspectratio]{Figure-2-Guanyu}
+\caption{The model hyperparameter tuning processes: (a) Elastic net regularized Coxph regression models, tenfold cross-validated partial log-likelihood deviance as a loss function of both tuning parameters $\alpha$ and $log(\lambda)$. The intersection of solid red highlight lines shown the optimal tuning parameters where $\alpha = 0.172$, $log(\lambda) = -1.321$, minimal deviance =12.4 and 17 lncRNAs been selected. (b) Cross-validated partial likelihood deviance curve, the red dots represent the tenfold cross validated mean errors with up and low 95\% confidence intervals. The left dotted vertical lines shown the cross validated error curve hit its minimum when $log(\lambda) = -1.321$. And the right one shows the most regularized models with error within one standard deviation of the minimum where $log(\lambda) = -0.761$. (c) Coefficient shrinkage paths and fraction deviance explained by the model. The right dashed line indicates that 0.051\% of the partial log-likelihood deviance explained by the final model. (d) Coefficient shrinkage paths, the red highlighted paths are non-zero coefficient features with corresponding $log(\lambda)$ value. The right dotted line indicates the null model, which means no coefficients been included.}
+\label{Fig2}
+\end{figure}
+
+\subsection*{ Comparison of survival prediction models and associated lncRNA features }
+The follow-up survival information was randomly partitioned into training and testing groups, the survival status and other clinical features were well balanced without  significant differences in each group, the baseline summary statistics were listed in Tab. S1. Since the data contains much missing values except stage, a predominant  prognostic related factor as expected, only was it included in the downstream analysis, and as it is an ordinal categorical covariant, Coxph model manipulate  it as dummy variable, and set $Stage = i$ as the reference. The 17 candidate lncRNAs was further selected by multivariate Coxph model stepwise feature selection strategy on training data, finally, model built on eight lncRNAs and stage achieved minimal Akaike information criterion $AIC = 582.21$,  $C$-$Index = 0.82$ and log-rank test with $global p$-$value = 6.3\times10^{-12}$. The variables including $Stage = iv$ (9.65, 2.20 - 42.36), RP11-440D17.3 (1.18, 1.05 - 1.33) and MIR210HG (1.52, 1.18 - 1.96) have significant HR under Wald test, which indicating that a strong relationship between increased risk of death and their values, as shown in Fig.\ref{Fig3}. Relative risk score (RRS) were significantly higher in the patient suffering from death of CRC in both training and testing groups as shown in Fig.S1 (b), the instance of death experienced patients was 73 (77.7\%) versus 21 (22.3\%) in high and low risk groups, as seen in Tab.S2. The RRS stratified the patients into distinct survival risk group with significant $p$-$values < 0.0001$ and $0.0028$ under log-rank test, apparently separated Kaplan-Meier survival curves can be seen in Fig.\ref{Fig4} (a, b). As manifested in Fig. S1 (c), the patients were evenly partitioned in the two groups, the death experienced and high risked patients mainly clustered in the upright region on the graph. RRS also served as an excellent metric for time dependent risk prediction, the performance gradually decreasing with acceptable fluctuation as time goes by, the AUC values in both groups converged to  0.725 after 8 years predictions, as illustrated in Fig.\ref{Fig5}.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.8\textwidth]{Figure-3-Guanyu}       
+\caption{Forest plot of multivariate Coxph model: The HR values are represented by the black square, with 95\% upper and low CI, and corresponding Wald test p-value. $Stage = i$ as the reference, the HR of variable $Stage = iv$, RP11-440D17.3 and MIR210HG were highly statistically significant, with p-values 0.003, 0.005 and 0.001 respectively under Wald test.}
+\label{Fig3}
+\end{figure}
+
+The random forest survival model was constructed with optimal tuning hyperparameters ($ntree = 500$, $nodesize = 60$, $mtry = 1$) on training data with the aforementioned lncRNAs for comparable with the  frequently used Coxph method. Survival trees grown using a log-rank splitting rule which extensive search among all independent variables to find the variable that maximizes survival differences between the two daughter nodes, each patient's risk estimation was calculated with a Kaplan Meier estimator within each terminal node, at each event time, and Out Of Bag (OOB) error were the ensemble average of bootstrapping samples. As expected, random forest prone to overfitting  the training data, which worked well on training data with $OOB$ error$ = 25.011\%$ , but not generalized well in testing data, with $OOB$ error$ = 32.169\%$. as seen in Fig.\ref{Fig4} (c, d).  The prediction errors gradually increased with some fluctuations as time goes on, which seemed to be in approximately same trends and slightly incongruous between training and testing data in each model. By adding the eight lncRNAs expression information, the Coxph model archived a relative better performance than the model that only contained the stage covariant. While the C-index were highly stable between models, which concordant to the declared none time dependent method for model evaluation. Random forests survival model seemed to consistently have a slightly lower C-index than the other models, and been outperform by the Coxph models. Although slightly discrepancy been observed in the training and testing groups, the adding information of lncRNAs improved the overall prediction performance.
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.8\textwidth]{Figure-4-Guanyu}       
+\caption{Coxph risk prediction model: Relative risk score works well in stratifying patients into distinctive risk groups, and Kaplan-Meier survival curves on training and testing sets with significant p-values under log-rank test (a, b). Random forest survival model: OOB error of  training (25.011\%) and testing (32.169\%), blue lines correspond to the censored patients, and red lines refer to the death experienced ones, while the dashed vertical lines indicate the 1- and 3-year survival estimations (c, d).}
+\label{Fig4}
+\end{figure}
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.8\textwidth]{Figure-5-Guanyu}       
+\caption{Time dependent ROC curve of risk prediction based on relative risk score: Relative risk as a marker (metric) for time dependent risk prediction on training and testing group with corresponding optimal threshold (a, b, c). The prediction performance AUC are presented with some fluctuation in the initial years but stably converged to 0.725 after 8 years prediction (d).}
+\label{Fig5}
+\end{figure}
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.8\textwidth]{Figure-6-Guanyu}    
+\caption{Performance of models on time dependent risk prediction: In the up panel (a, b), Brier score were compared between these model and reference. The  predictive error gradually increased with time. Coxph model works better than other models both in training and testing datasets. In the low panel (c, d) C-index were compared between models, which are very stable to time. Coxph model again archived a better performance. By adding the eight lncRNAs expression information, the Coxph model archived relative better performance than the model that only contained the stage covariant. }
+\label{Fig6}
+\end{figure}
+
+\subsection*{Comparison of classification models' performance }
+The logistic regression was settled as benchmark and overall accuracy rate were computed along with a 95\% CI. The model hyperparameter tuning processes were depicted in Fig.S2, and the comparison of performance evaluating metrics were listed in Tab.\ref{Tab2}. Those strong classifiers SVM, random forest and neural network archived excellent higher performance both in training and testing group, which means these models were highly sensitive and specific in distinguishing between tumor and non-tumor samples, and well generalized, as shown in Fig.\ref{Fig7} (a, b). The cumulative gain lift curve achieved same pattern in the aforementioned models, which indicating that these models having an enhanced response against a random chosen model as the dashed diagonal line, and successfully captured most of the events over a given number of samples, as presented in Fig.\ref{Fig7} (c, d).
+
+\begin{table}[htp]
+\setlength\tabcolsep{1.8pt}
+  \centering
+  \caption{Performance of classification models}
+    \extrarowheight=\aboverulesep
+    \addtolength{\extrarowheight}{\belowrulesep}
+    \aboverulesep=0pt
+    \belowrulesep=0pt
+    \begin{tabular}{llccllcllc}
+        \toprule[2pt]
+   \rowcolor{Blue}\textbf{Classifiers} & \textbf{Group} & \textbf{Accuracy} & \textbf{CI} & \textbf{p-value}  & \textbf{AUC} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Kappa} \\
+         \midrule[1pt]
+    \textbf{Logistic Regression} & Training & 0.679 & (0.63-0.72) & 8.973e-09 & 0.792 & 0.648 & 0.636 & 0.642 & 0.350 \\
+          & Testing & 0.728 & (0.66-0.79) & 1.482e-07 & 0.792& 0.701 & 0.701 & 0.701 & 0.451 \\
+    \specialrule{0em}{.3em}{.3em}
+   \rowcolor{LightBlue}\textbf{Elastic Net} & Training & 0.674 & (0.63-0.72) & 2.751e-08 & 0.793 & 0.642 & 0.636 & 0.639 & 0.342 \\
+       \rowcolor{LightBlue}   &Testing & 0.733 & (0.66-0.79) & 6.452e-08 & 0.794 & 0.700   & 0.724 & 0.712 & 0.463 \\
+    \specialrule{0em}{.3em}{.3em}
+    \textbf{SVM} & Training & 0.978 & (0.96-0.99) & 4.768e-99 & 0.996 & 0.975 & 0.975 & 0.975 & 0.955 \\
+          & Testing & 0.916 & (0.87-0.95) & 1.908e-29 & 0.974 & 0.918 & 0.897 & 0.907 & 0.831 \\
+    \specialrule{0em}{.3em}{.3em}
+ \rowcolor{LightBlue}  \textbf{Random Forest}& Training & 1.000     & (0.99-1.00) & 3.748e-118 & 1.000     & 1.000     & 1.000     & 1.000     & 1.000 \\
+   \rowcolor{LightBlue}       & Testing & 0.922 & (0.87-0.96) & 2.057e-30 & 0.980 & 0.919 & 0.908 & 0.913 & 0.842 \\
+    \specialrule{0em}{.3em}{.3em}
+   \textbf{Neural Network}& Training & 0.982 & (0.97-0.99) & 3.217e-102 & 0.999 & 0.985 & 0.975 & 0.980 & 0.964 \\
+          & Testing & 0.906 & (0.86-0.94) & 1.351e-27 & 0.963 & 0.960  & 0.828 & 0.889 & 0.808 \\
+          \bottomrule[1.5pt]
+    \end{tabular}
+  \label{Tab2}
+\end{table}
+
+\begin{figure}[htp]
+\centering
+\includegraphics[width=0.8\textwidth]{Figure-7-Guanyu}       
+\caption{ROC and lift curves of classification models:  (a, b) SVM, random forest and neural network models have high AUC value approximate to one in both datasets, while logistic regression and elastic net regularized regression model have similar performance which are worse than the above models. (c, d) Lift defined as how much of an identified population is captured at a given percentile, for a given percentile cutoff what is the proportion of positives were identified over how many positives were identified by the model. Lift curves follows the same pattern as the ROC curves.}
+\label{Fig7}
+\end{figure}
+
+
+
+\section*{Discussion}
+Throughout human history, people have been eagerly searching for a panacea to combat cancers, it is becoming apparently that the growing knowledge of biomarkers are revolutionizing and optimizing our strategies to manage cancer patients. With the help of advanced statistics and bioinformatics these markers have been used to identify individuals with active disease or pathological status. Unfortunately, many of the newly discovered markers are not readily transferable to clinical practice, because some of them are just based on relatively small cohort, which needs further been scientific scrutinized\cite{RN18}. In the thriving machine learning realm, numerous of amazing algorithms are used to optimize computationally complex problems, building up cutting edge reproducible predictive models on large dataset. These strategies can be adopted to solving diagnostic and prognostic problems in a variety of medical research domains, extracting important clinical parameters, and supporting patient management\cite{RN19}. A myriad of papers been published on biomedical literature, however, the implementations are so far been constrained, because these black box methods are not immediately understandable to the clinician, prone to overfitting the problems\cite{RN20}.
+
+Cross-validation and bootstrapping are two commonly used resampling techniques to assess the performance of a prediction model. The common workflow is randomly splitting the entire data set into training and testing group,  while cross validation involves repeatedly splitting the training data into internal training and validating set, where the training set is used for model development and the testing set for assessing the model performance. The predictive performance is the average of the numerous internal training and testing partitions. Bootstrapping analyzes a predefined times of subsamples repeatedly, where each subsample is a random sample with replacement from the entire data. In this paper we used elastic net regularized Coxph regression model with tenfold cross validation for feature selection on the entire follow-up survival data set, and successfully pick out the lncRNA features with minimal cross validated prediction error, then randomly partitioned the survival data into training and testing group, and constructed a time dependent risk prediction model base on the Coxph relative risk model which has minimal AIC value, and along with a random forest survival model with the same selected features. While evaluating their time dependent risk prediction performance, we find that the relative risk score severed as a excellent metric for stratifying patients' survival risk group, and archived stable prediction performance compare to random forest model. As expected, the pathological stage is one of the predominant prognostic related factors in all cancers, in this study we only included the stage variable due to too much missing values of the other clinical features, we find that by adding the selected eight lncRNAs expression information, the model performance increased. It's unexpected that random forest model has disadvantage in time dependent risk prediction, minor discrepant prediction error been observed in training and testing group, which indicated that this model might overfitting the training data and not generalized well on testing data. Another reason might be that we initially constrained the extensive searching  power of ensemble decision-tree based method, as we confined the model building only on the same eight lncRNA features as Coxph model. It's intrinsically difficult to make predictions on censoring data, since censoring is a common form of missing data problem which produces unpredictable bias in survival analysis. As anticipated that SVM, neural network and random forest model constructed with the same lncRNA features for binary classification problem archived higher accuracy in both training and testing group than other algorithms. Theses theoretical models might be implemented in CRC diagnosis and prognosis prediction and might give us hints of the underling molecular mechanisms. There also exist some limitations in the design of our pipeline due to currently availability of relatively small CRC RNA sequencing data, our models were only tested with part of the homogenous data, not further been tested on different source of heterogenous data. Fitting and generalization are the problems that all machine learning algorithms being challenged.
+
+To testify that if the selected lncRNAs have reliable biological functions in cancers, we conducted a comprehensive literature search, unfortunately not all of them has been reported. EIF3J-AS1 was reported as a crucial regulator of multiple drug resistance by inducing autophagy in gastric cancer\cite{RN21}, and as signature of prediction recurrence free survival in hepatocellular carcinoma\cite{RN22}, MIR210HG as a prognostic signature for colorectal adenocarcinoma and hepatocellular carcinoma\cite{RN23,RN24}, and LINC00261 suppresses gastric cancer progression by promoting Slug degradation\cite{RN25}. Our model feature selection strategy indeed picking out some biologically important lncRNA signatures, and further a well-designed traditional biological experiment is required to validate our discovery.
+
+\section*{Methods}
+
+\subsection*{Data acquisition preprocessing}
+We download the gene expression and phenotype datasets on website \url{https://toil.xenahubs.net/download/TcgaTargetGtex_rsem_gene_fpkm.gz} and the TCGA port on website \url{https://portal.gdc.cancer.gov/}. Genes were mapped to GENECODE v22 and v23, respectively. Both gene expression data were $/log_{2}(FPKM+0.001)$ normalized, and the nearly zero low expressed genes which have value less than 0.1 in more than 60\% of the samples were filtered out. Totally, 349 non-tumor and 290 CRC samples were extracted, and 428 matched patient’s follow-up survival information were retrieved by using FirebrowseR package\cite{RN26}.
+
+\subsection*{Differential gene expression and survival analysis}
+Gene expression value in technical replicate samples were represented with their corresponding averages, and limma method  was used to perform differential expression analysis\cite{RN27}. Then we extracted the lncRNAs expression for Kaplan Meier, logrank test and univariate Coxph model analysis. The Coxph model is a hazard function of a failure time t, conditioned on a p-dimensional vector of genomic feature \textbf X, defined as $h(t | X)=h_{0}(t) \exp \left(\beta^{T} X\right)$, where the baseline hazard $h_{0}(t)$ is parametric part. The model defines a so called prognostic score $\beta^{T}\mathbf X$ that orders the covariates in terms of their risk, high values of $\beta^{T}\mathbf X$ imply a high risk, and vice versa.
+Elastic net regularized Cox model was used under tenfold cross Testing to tune the best hyperparameters($\alpha$ and $\lambda$) via global optimization \cite{RN28,RN29} and selecting the most survival related lncRNA candidates with minimal prediction error.
+
+The follow-up data were randomly separate into 70\% for training and remaining for testing, and keeping the survival status balanced in each group. Candidate lncRNAs were further filtered by stepwise multivariate Coxph model under minimal AIC. The\emph{predict.coxph()} function computes the hazard ratio relative to the average for all p predictor variables, the categorical variable stage is converted to dummy coded predictors whose average been calculated. The fitted regression $\beta$ coefficients developed from the training data were used to compute the relative risk scores (RRS) for each patient in both datasets\cite{RN30}. The RRS also acted as a metric for survival risk prediction, and time dependent ROC curves were used to compare the sensitivity and specificity of the prediction and identify the best patient stratification RRS cutoff value, by using the survivalROC R package\cite{RN31}. Patients with RRS < median (RRS) were assigned as low risk group. Another random forest survival model based on the above selected lncRNAs were also built with tuning hyperparameters to obtain minimal OOB error\cite{RN32}. To compare the discriminative power of a risk prediction of the survival models, two methods namely prediction error which was accessed by an expected time dependent Brier score using inverse probability of censoring weights, and the concordance index (C-index) which was not dependent on a fixed time point for the evaluation of censor status of each individuals. We applied 500-time bootstrapped resampling cross testing strategy to compute the Bier score and C-index by using the pec R package\cite{RN33}.
+
+\subsection*{Classification models in CRC prediction and performance evaluation}
+The corresponding  lncRNAs in TCGA-GTEx CRC data were extracted, Box-Cox normalized and randomly split into 70\% for training data and the remaining for testing. By using care R package\cite{RN16},  five classification algorithms viz. logistic regression (as benchmark), elastic net regularized logistic regression, random forest, support vector machine, and neural network were constructed with 5 repeated tenfold cross validation to search hyperparameters that best fitted the model with maximum repeated cross-validated prediction accuracy. Every samples' class (non-tumor or tumor) probability were calculated by each model, and pROC curves were drawn by pROC R package using these probabilities\cite{RN34}. Each optimized model was finally evaluated with the testing data and ranked by performance metrics viz. accuracy, precision, recall, F1 score, AUC and lift curve.
+\subsection*{Statistical analysis  }
+All statistical analysis is performed by R software (version: 3.6 ) Chi-sq test for categorical variables, continuity correction is only used in the 2-by-2 case, and t-test for continuous variables. The results are expressed in mean $\pm$1 standard deviation (sd), and significant level ($\alpha=0.05$).
+
+\subsubsection*{The functions and model evaluation metrics}
+\begin{equation}\label{Elasticnet}
+L_{elasticnet}(\hat{\beta})=\frac{\sum_{i=1}^{n}\left(y_{i}-x_{i}^{\prime} \hat{\beta}\right)^{2}}{2 n}+\lambda\left(\frac{1-\alpha}{2} \sum_{j=1}^{m} \hat{\beta}_{j}^{2}+\alpha \sum_{j=1}^{m}\left|\hat{\beta}_{j}\right|\right)
+\end{equation}
+
+\begin{equation} \label{risk}
+Relative Risk Score = \frac{h_{0}(t) \exp \left(\sum_{i=1}^{p} \beta_{1} x_{i}\right)}{h_{0}(t) \exp \left(\sum_{i=1}^{p}\overline{x}_{i}\right)}
+\end{equation}
+
+\begin{equation} \label{kappa}
+ Cohen's Kappa = \frac{p_{o}-p_{e}}{1-p_{e}} $, where ${p{_0}}$ is the observed agreement, and ${p{_e}}$ is the expected agreement.$
+ \end{equation}
+
+\begin{equation} \label{apr}
+Accuracy =TP+TN/TP+FP+FN+TN, Precision = TP/TP+FP, Recall = TP/TP+FN
+\end{equation}
+
+\begin{equation} \label{F1}
+F1 Score = 2\times(Recall\times Precision)/(Recall + Precision)
+\end{equation}
+
+
+\begin{thebibliography}{10}
+\urlstyle{rm}
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\expandafter\ifx\csname doiprefix\endcsname\relax\def\doiprefix{DOI: }\fi
+\providecommand{\bibinfo}[2]{#2}
+\providecommand{\eprint}[2][]{\url{#2}}
+
+\bibitem{RN1}
+\bibinfo{author}{Tomlinson, J.~S.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Actual 10-year survival after
+  resection of colorectal liver metastases defines cure}}.
+\newblock {\emph{\JournalTitle{J Clin Oncol}}} \textbf{\bibinfo{volume}{25}},
+  \bibinfo{pages}{4575--80}, \doiprefix\url{10.1200/JCO.2007.11.0833}
+  (\bibinfo{year}{2007}).
+
+\bibitem{RN2}
+\bibinfo{author}{Ansa, B.~E.}, \bibinfo{author}{Coughlin, S.~S.},
+  \bibinfo{author}{Alema-Mensah, E.} \& \bibinfo{author}{Smith, S.~A.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Evaluation of colorectal cancer
+  incidence trends in the united states (2000-2014)}}.
+\newblock {\emph{\JournalTitle{J Clin Med}}} \textbf{\bibinfo{volume}{7}},
+  \doiprefix\url{10.3390/jcm7020022} (\bibinfo{year}{2018}).
+
+\bibitem{RN3}
+\bibinfo{author}{Wang, J.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Regulatory roles of long non-coding
+  rnas implicated in cancer hallmarks}}.
+\newblock {\emph{\JournalTitle{Int J Cancer}}}
+  \doiprefix\url{10.1002/ijc.32277} (\bibinfo{year}{2019}).
+
+\bibitem{RN4}
+\bibinfo{author}{Wang, Q.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Long noncoding rna linc02023
+  regulates pten stability and suppresses tumorigenesis of colorectal cancer in
+  a pten-dependent pathway}}.
+\newblock {\emph{\JournalTitle{Cancer Lett}}} \textbf{\bibinfo{volume}{451}},
+  \bibinfo{pages}{68--78}, \doiprefix\url{10.1016/j.canlet.2019.02.041}
+  (\bibinfo{year}{2019}).
+
+\bibitem{RN5}
+\bibinfo{author}{Wang, Y.~Q.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Satb2-as1 suppresses colorectal
+  carcinoma aggressiveness by inhibiting satb2-dependent snail transcription
+  and epithelial-mesenchymal transition}}.
+\newblock {\emph{\JournalTitle{Cancer Res}}}
+  \doiprefix\url{10.1158/0008-5472.CAN-18-2900} (\bibinfo{year}{2019}).
+
+\bibitem{RN6}
+\bibinfo{author}{Yang, C.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Long noncoding rna hcp5 contributes
+  to epithelial-mesenchymal transition in colorectal cancer through zeb1
+  activation and interacting with mir-139-5p}}.
+\newblock {\emph{\JournalTitle{Am J Transl Res}}}
+  \textbf{\bibinfo{volume}{11}}, \bibinfo{pages}{953--963}
+  (\bibinfo{year}{2019}).
+
+\bibitem{RN7}
+\bibinfo{author}{Kim, T.} \& \bibinfo{author}{Croce, C.~M.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Long noncoding rnas: Undeciphered
+  cellular codes encrypting keys of colorectal cancer pathogenesis}}.
+\newblock {\emph{\JournalTitle{Cancer Lett}}} \textbf{\bibinfo{volume}{417}},
+  \bibinfo{pages}{89--95}, \doiprefix\url{10.1016/j.canlet.2017.12.033}
+  (\bibinfo{year}{2018}).
+
+\bibitem{RN8}
+\bibinfo{author}{Batista, P.~J.} \& \bibinfo{author}{Chang, H.~Y.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Long noncoding rnas: cellular
+  address codes in development and disease}}.
+\newblock {\emph{\JournalTitle{Cell}}} \textbf{\bibinfo{volume}{152}},
+  \bibinfo{pages}{1298--307}, \doiprefix\url{10.1016/j.cell.2013.02.012}
+  (\bibinfo{year}{2013}).
+
+\bibitem{RN9}
+\bibinfo{author}{Wahlestedt, C.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Targeting long non-coding rna to
+  therapeutically upregulate gene expression}}.
+\newblock {\emph{\JournalTitle{Nat Rev Drug Discov}}}
+  \textbf{\bibinfo{volume}{12}}, \bibinfo{pages}{433--46},
+  \doiprefix\url{10.1038/nrd4018} (\bibinfo{year}{2013}).
+
+\bibitem{RN10}
+\bibinfo{author}{Cancer Genome Atlas~Research, N.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{The cancer genome atlas pan-cancer
+  analysis project}}.
+\newblock {\emph{\JournalTitle{Nat Genet}}} \textbf{\bibinfo{volume}{45}},
+  \bibinfo{pages}{1113--20}, \doiprefix\url{10.1038/ng.2764}
+  (\bibinfo{year}{2013}).
+
+\bibitem{RN11}
+\bibinfo{author}{Consortium, G.~T.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Human genomics. the genotype-tissue
+  expression (gtex) pilot analysis: multitissue gene regulation in humans}}.
+\newblock {\emph{\JournalTitle{Science}}} \textbf{\bibinfo{volume}{348}},
+  \bibinfo{pages}{648--60}, \doiprefix\url{10.1126/science.1262110}
+  (\bibinfo{year}{2015}).
+
+\bibitem{RN12}
+\bibinfo{author}{Vivian, J.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Toil enables reproducible, open
+  source, big biomedical data analyses}}.
+\newblock {\emph{\JournalTitle{Nat Biotechnol}}} \textbf{\bibinfo{volume}{35}},
+  \bibinfo{pages}{314--316}, \doiprefix\url{10.1038/nbt.3772}
+  (\bibinfo{year}{2017}).
+
+\bibitem{RN13}
+\bibinfo{author}{Vidyasagar, M.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Identifying predictive features in
+  drug response using machine learning: opportunities and challenges}}.
+\newblock {\emph{\JournalTitle{Annu Rev Pharmacol Toxicol}}}
+  \textbf{\bibinfo{volume}{55}}, \bibinfo{pages}{15--34},
+  \doiprefix\url{10.1146/annurev-pharmtox-010814-124502}
+  (\bibinfo{year}{2015}).
+
+\bibitem{RN14}
+\bibinfo{author}{Kourou, K.}, \bibinfo{author}{Exarchos, T.~P.},
+  \bibinfo{author}{Exarchos, K.~P.}, \bibinfo{author}{Karamouzis, M.~V.} \&
+  \bibinfo{author}{Fotiadis, D.~I.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Machine learning applications in
+  cancer prognosis and prediction}}.
+\newblock {\emph{\JournalTitle{Comput Struct Biotechnol J}}}
+  \textbf{\bibinfo{volume}{13}}, \bibinfo{pages}{8--17},
+  \doiprefix\url{10.1016/j.csbj.2014.11.005} (\bibinfo{year}{2015}).
+
+\bibitem{RN15}
+\bibinfo{author}{Wenric, S.} \& \bibinfo{author}{Shemirani, R.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Using supervised learning methods
+  for gene selection in rna-seq case-control studies}}.
+\newblock {\emph{\JournalTitle{Front Genet}}} \textbf{\bibinfo{volume}{9}},
+  \bibinfo{pages}{297}, \doiprefix\url{10.3389/fgene.2018.00297}
+  (\bibinfo{year}{2018}).
+
+\bibitem{RN16}
+\bibinfo{author}{Kuhn, M.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Building predictive models in r
+  using the caret package}}.
+\newblock {\emph{\JournalTitle{Journal of Statistical Software, Articles}}}
+  \textbf{\bibinfo{volume}{28}}, \bibinfo{pages}{1--26},
+  \doiprefix\url{10.18637/jss.v028.i05} (\bibinfo{year}{2008}).
+
+\bibitem{RN17}
+\bibinfo{author}{Zhang, X.}, \bibinfo{author}{Wang, J.}, \bibinfo{author}{Li,
+  J.}, \bibinfo{author}{Chen, W.} \& \bibinfo{author}{Liu, C.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Crlncrc: a machine learning-based
+  method for cancer-related long noncoding rna identification using integrated
+  features}}.
+\newblock {\emph{\JournalTitle{BMC Med Genomics}}}
+  \textbf{\bibinfo{volume}{11}}, \bibinfo{pages}{120},
+  \doiprefix\url{10.1186/s12920-018-0436-9} (\bibinfo{year}{2018}).
+
+\bibitem{RN18}
+\bibinfo{author}{Chandra~Gupta, S.} \& \bibinfo{author}{Nandan~Tripathi, Y.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Potential of long non-coding rnas
+  in cancer patients: From biomarkers to therapeutic targets}}.
+\newblock {\emph{\JournalTitle{Int J Cancer}}} \textbf{\bibinfo{volume}{140}},
+  \bibinfo{pages}{1955--1967}, \doiprefix\url{10.1002/ijc.30546}
+  (\bibinfo{year}{2017}).
+
+\bibitem{RN19}
+\bibinfo{author}{Kourou, K.}, \bibinfo{author}{Exarchos, T.~P.},
+  \bibinfo{author}{Exarchos, K.~P.}, \bibinfo{author}{Karamouzis, M.~V.} \&
+  \bibinfo{author}{Fotiadis, D.~I.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Machine learning applications in
+  cancer prognosis and prediction}}.
+\newblock {\emph{\JournalTitle{Comput Struct Biotechnol J}}}
+  \textbf{\bibinfo{volume}{13}}, \bibinfo{pages}{8--17},
+  \doiprefix\url{10.1016/j.csbj.2014.11.005} (\bibinfo{year}{2015}).
+
+\bibitem{RN20}
+\bibinfo{author}{Foster, K.~R.}, \bibinfo{author}{Koprowski, R.} \&
+  \bibinfo{author}{Skufca, J.~D.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Machine learning, medical
+  diagnosis, and biomedical engineering research - commentary}}.
+\newblock {\emph{\JournalTitle{Biomed Eng Online}}}
+  \textbf{\bibinfo{volume}{13}}, \bibinfo{pages}{94},
+  \doiprefix\url{10.1186/1475-925X-13-94} (\bibinfo{year}{2014}).
+
+\bibitem{RN21}
+\bibinfo{author}{Luo, Y.}, \bibinfo{author}{Zhou, R.}, \bibinfo{author}{Huang,
+  N.}, \bibinfo{author}{Sun, L.} \& \bibinfo{author}{Liao, W.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Effect of long non-coding rna
+  eif3j-as1 on multi-drug resistance and autophagy in gastric cancer.}}
+\newblock {\emph{\JournalTitle{Journal of Clinical Oncology}}}
+  \textbf{\bibinfo{volume}{35}}, \bibinfo{pages}{e15581--e15581},
+  \doiprefix\url{10.1200/JCO.2017.35.15\_suppl.e15581} (\bibinfo{year}{2017}).
+
+\bibitem{RN22}
+\bibinfo{author}{Gu, J.~X.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Six-long non-coding rna signature
+  predicts recurrence-free survival in hepatocellular carcinoma}}.
+\newblock {\emph{\JournalTitle{World J Gastroenterol}}}
+  \textbf{\bibinfo{volume}{25}}, \bibinfo{pages}{220--232},
+  \doiprefix\url{10.3748/wjg.v25.i2.220} (\bibinfo{year}{2019}).
+
+\bibitem{RN23}
+\bibinfo{author}{He, Z.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Identification of linc01234 and
+  mir210hg as novel prognostic signature for colorectal adenocarcinoma}}.
+\newblock {\emph{\JournalTitle{J Cell Physiol}}}
+  \textbf{\bibinfo{volume}{234}}, \bibinfo{pages}{6769--6777},
+  \doiprefix\url{10.1002/jcp.27424} (\bibinfo{year}{2019}).
+
+\bibitem{RN24}
+\bibinfo{author}{Wang, Y.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Mir210hg predicts poor prognosis
+  and functions as an oncogenic lncrna in hepatocellular carcinoma}}.
+\newblock {\emph{\JournalTitle{Biomed Pharmacother}}}
+  \textbf{\bibinfo{volume}{111}}, \bibinfo{pages}{1297--1301},
+  \doiprefix\url{10.1016/j.biopha.2018.12.134} (\bibinfo{year}{2019}).
+
+\bibitem{RN25}
+\bibinfo{author}{Yu, Y.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Long non-coding rna linc00261
+  suppresses gastric cancer progression via promoting slug degradation}}.
+\newblock {\emph{\JournalTitle{J Cell Mol Med}}} \textbf{\bibinfo{volume}{21}},
+  \bibinfo{pages}{955--967}, \doiprefix\url{10.1111/jcmm.13035}
+  (\bibinfo{year}{2017}).
+
+\bibitem{RN26}
+\bibinfo{author}{Deng, M.}, \bibinfo{author}{Bragelmann, J.},
+  \bibinfo{author}{Kryukov, I.}, \bibinfo{author}{Saraiva-Agostinho, N.} \&
+  \bibinfo{author}{Perner, S.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Firebrowser: an r client to the
+  broad institute's firehose pipeline}}.
+\newblock {\emph{\JournalTitle{Database (Oxford)}}}
+  \textbf{\bibinfo{volume}{2017}}, \doiprefix\url{10.1093/database/baw160}
+  (\bibinfo{year}{2017}).
+
+\bibitem{RN27}
+\bibinfo{author}{Ritchie, M.~E.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{limma powers differential
+  expression analyses for rna-sequencing and microarray studies}}.
+\newblock {\emph{\JournalTitle{Nucleic Acids Res}}}
+  \textbf{\bibinfo{volume}{43}}, \bibinfo{pages}{e47},
+  \doiprefix\url{10.1093/nar/gkv007} (\bibinfo{year}{2015}).
+
+\bibitem{RN28}
+\bibinfo{author}{Sill, M.}, \bibinfo{author}{Hielscher, T.},
+  \bibinfo{author}{Becker, N.} \& \bibinfo{author}{Zucknick, M.}
+\newblock \bibinfo{journal}{\bibinfo{title}{{c060}: Extended inference with
+  lasso and elastic-net regularized cox and generalized linear models}}.
+\newblock {\emph{\JournalTitle{Journal of Statistical Software}}}
+  \textbf{\bibinfo{volume}{62}}, \bibinfo{pages}{1--22} (\bibinfo{year}{2014}).
+
+\bibitem{RN29}
+\bibinfo{author}{Bernau, C.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Cross-study validation for the
+  assessment of prediction algorithms}}.
+\newblock {\emph{\JournalTitle{Bioinformatics}}} \textbf{\bibinfo{volume}{30}},
+  \bibinfo{pages}{i105--12}, \doiprefix\url{10.1093/bioinformatics/btu279}
+  (\bibinfo{year}{2014}).
+
+\bibitem{RN30}
+\bibinfo{author}{Chen, H.~C.}, \bibinfo{author}{Kodell, R.~L.},
+  \bibinfo{author}{Cheng, K.~F.} \& \bibinfo{author}{Chen, J.~J.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Assessment of performance of
+  survival prediction models for cancer prognosis}}.
+\newblock {\emph{\JournalTitle{BMC Med Res Methodol}}}
+  \textbf{\bibinfo{volume}{12}}, \bibinfo{pages}{102},
+  \doiprefix\url{10.1186/1471-2288-12-102} (\bibinfo{year}{2012}).
+
+\bibitem{RN31}
+\bibinfo{author}{Heagerty, P.~J.}, \bibinfo{author}{Lumley, T.} \&
+  \bibinfo{author}{Pepe, M.~S.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Time-dependent roc curves for
+  censored survival data and a diagnostic marker}}.
+\newblock {\emph{\JournalTitle{Biometrics}}} \textbf{\bibinfo{volume}{56}},
+  \bibinfo{pages}{337--44} (\bibinfo{year}{2000}).
+
+\bibitem{RN32}
+\bibinfo{author}{Ishwaran, H.}, \bibinfo{author}{Kogalur, U.},
+  \bibinfo{author}{Blackstone, E.} \& \bibinfo{author}{Lauer, M.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Random survival forests}}.
+\newblock {\emph{\JournalTitle{Ann. Appl. Statist.}}}
+  \textbf{\bibinfo{volume}{2}}, \bibinfo{pages}{841--860}
+  (\bibinfo{year}{2008}).
+
+\bibitem{RN33}
+\bibinfo{author}{Mogensen, U.~B.}, \bibinfo{author}{Ishwaran, H.} \&
+  \bibinfo{author}{Gerds, T.~A.}
+\newblock \bibinfo{journal}{\bibinfo{title}{Evaluating random forests for
+  survival analysis using prediction error curves}}.
+\newblock {\emph{\JournalTitle{J Stat Softw}}} \textbf{\bibinfo{volume}{50}},
+  \bibinfo{pages}{1--23} (\bibinfo{year}{2012}).
+
+\bibitem{RN34}
+\bibinfo{author}{Robin, X.} \emph{et~al.}
+\newblock \bibinfo{journal}{\bibinfo{title}{proc: an open-source package for r
+  and s+ to analyze and compare roc curves}}.
+\newblock {\emph{\JournalTitle{BMC Bioinformatics}}}
+  \textbf{\bibinfo{volume}{12}}, \bibinfo{pages}{77} (\bibinfo{year}{2011}).
+
+\end{thebibliography}
+
+\section*{Acknowledgements}
+This work was supported by the National Natural Science Foundation of China (No. 81272493, 81472213), the Health Commission of Zhejiang Province (No. 2019331258, No. 2019335600), Natural Sciences Foundation of Zhejiang Province (No. LY17H220001).
+
+\section*{Author information}
+\textbf{Zhuha Zhou, Ximei Ma} contributed equally to this work.
+
+\subsection*{Affiliations}
+Department of General Surgery, Sir Run Run Shaw Hospital, School of Medicine, Zhejiang University, East Qingchun Road 3, 310016, Hangzhou, Zhejiang, China   Zhuha Zhou, Ximei Ma and Guanyu Wang
+
+\noindent{Division of Hepatobiliary and Pancreatic Surgery, Second Affiliated Hospital, School of Medicine, Zhejiang University, Jiefang Road 88, 310009, Hangzhou, China}   QiuQiang Zhang
+
+\noindent{Center for Bionanoengineering and Key Laboratory of Biomass Chemical Engineering of Ministry of Education, College of Chemical and Biological Engineering, Zhejiang University, Zheda Road 38, 310027 Hangzhou, China}   Zhuxian Zhou
+
+\noindent{Institute of Translational Medicine, School of Medicine, Zhejiang University, East Qingchun Road 3, 310016, Hangzhou, Zhejiang, China}   Ye Feng
+
+\subsection*{Contributions}
+Z.Z, Q.Z and X.M conceived and designed the study, performed computational experiments and statistical analyses, and wrote the manuscript. Z. Z, Y.F and G.W. supervised the study and provided critical revision of the manuscript. All authors approved the manuscript.
+\subsection*{Competing interests}
+All the authors declare that they have no conflict of interest.
+
+\subsection*{Corresponding author}
+Correspondence to Guanyu Wang.
+\section*{Supplementary information}
+
+\textbf{Supplementary files}
+R codes and documents for reproducible analysis are available at \url{https://github.com/woodhaha/CRC_data_mining}.
+The statistical baseline of survival follow-up information in training and testing group are shown in Tab.S1, and statistical information of lncRNA features in patients' group are shown in Tab.S2. The  lncRNA features and relative risk score distribution  are shown in Fig.S1, and the hyperparameter tuning process of classification model are presented in Fig.S2.
+
+\end{document} 

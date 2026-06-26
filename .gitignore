@@ -55,8 +55,22 @@ $RECYCLE.BIN/
 .omc/state/
 .omc/sessions/
 
+# Tool artifacts
+.codegraph/
+.claude/settings*
+.claude/worktrees/
+
 # Archives
 *.rar
 *.zip
 *.7z
-outputs/
+*.gz
+
+# Raw data (too large for git)
+02_Data/raw/
+
+# Legacy outputs at root
+/outputs/
+/pipeline_flowchart.html
+03_Analysis/external_validation/
+Rplots.pdf

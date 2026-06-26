@@ -1,0 +1,30 @@
+\documentclass[12pt]{letter}
+\usepackage[paperwidth=8.5in,paperheight=11in,margin=1.1in]{geometry}
+\usepackage{mathptmx}
+\usepackage{hyperref}
+\pagestyle{empty}
+\signature{Guanyu Wang, M.D., Ph.D.\\
+Department of General Surgery\\
+Sir Run Run Shaw Hospital, School of Medicine\\
+Zhejiang University, Hangzhou 310016, China\\
+Email: wangguanyu@zju.edu.cn}
+
+\begin{document}
+
+\begin{letter}{The Editors\\
+\textit{Frontiers in Oncology}}
+
+\opening{Dear Editors,}
+
+We are pleased to submit our manuscript entitled ``Identification of Long Non-Coding RNA Signatures for Diagnosis and Prognosis of Colorectal Cancer via Machine Learning'' for consideration for publication in \textit{Frontiers in Oncology}.
+
+In this study, we developed an integrated computational pipeline to identify lncRNA signatures with both diagnostic and prognostic value in colorectal cancer (CRC). Using harmonized TCGA--GTEx expression data (639 samples) and TCGA-COAD clinical follow-up data (428 patients), we identified an 8-lncRNA panel whose expression profile, together with pathological stage, enabled robust risk stratification and accurate discrimination of tumor from normal tissue. Key findings include: (i) a Cox model incorporating eight lncRNAs and stage stratified patients into distinct risk groups (log-rank $p < 0.0001$), with time-dependent AUC converging to 0.725 at 8 years; (ii) SVM, random forest, and neural network classifiers achieved testing accuracies of 91.6\%, 92.2\%, and 90.6\%, substantially outperforming baseline methods; and (iii) several lncRNAs in our panel (EIF3J-AS1, MIR210HG, LINC00261) have been independently validated in prior studies, while others represent potentially novel CRC biomarkers.
+
+The manuscript has not been previously published and is not under consideration elsewhere. All analyses use publicly available datasets under appropriate guidelines. Complete R scripts are available at \url{https://github.com/woodhaha/CRC_data_mining} to ensure reproducibility.
+
+We believe this work will interest the readership of \textit{Frontiers in Oncology} as a systematic, reproducible framework for transcriptomic biomarker discovery. We appreciate your consideration and look forward to hearing from you.
+
+\closing{Sincerely,}
+
+\end{letter}
+\end{document}
