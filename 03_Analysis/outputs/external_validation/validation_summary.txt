@@ -1,0 +1,8 @@
+TCGA-READ External Validation
+==============================
+Date: 2026-06-26 13:52:11.752996 
+READ samples: 177 ( 167 Tumor + 10 Normal)
+Genes mapped: 6 / 36 
+Diagnostic AUC: 0.5257 
+Prognostic log-rank p: 0.037993 
+Prognostic Cox HR: 0.95 (0.83-1.09) p = 0.48982 
