@@ -179,7 +179,7 @@ In this study, we developed an integrated machine learning pipeline to discover 
 
 The five classification models trained on 36 lncRNAs selected through combined differential expression and survival significance criteria achieved testing-set AUCs ranging from 0.956 (logistic regression) to 0.999 (SVM), with corresponding accuracies between 0.953 and 0.984. The strong and consistent performance of SVM, random forest, and neural network—each exceeding AUC = 0.988—suggests that the expression patterns of these lncRNAs contain robust and redundant discriminative signals for distinguishing colorectal tumor from normal colon tissue. The superior performance of non-linear classifiers (SVM with radial basis kernel, random forest) over linear approaches (logistic regression, elastic net) indicates that the decision boundary in the 36-dimensional lncRNA expression space is intrinsically non-linear, a finding consistent with the complex, multi-mechanistic involvement of lncRNAs in colorectal carcinogenesis\cite{RN4,RN5,RN6}. Notably, the elastic net logistic regression selected an optimal mixing parameter of $\alpha = 0.11$—close to the lasso ($L_1$) end of the spectrum—indicating that a relatively sparse subset of these lncRNAs suffices for accurate classification, consistent with the principle of parsimony in biomarker panel design.
 
-These diagnostic performance metrics are comparable to or exceed those reported in recent CRC lncRNA biomarker studies. For instance, LINC02577 was reported with AUC = 0.982 for tumor-normal discrimination in an independent cohort\cite{RN18}, and multi-lncRNA panels in other cancer types have achieved AUCs in the 0.85–0.95 range. The high sensitivity and specificity observed here (e.g., SVM sensitivity = 0.989, specificity = 0.977) support the potential utility of these lncRNAs as non-invasive or tissue-based diagnostic adjuncts, pending validation in prospectively collected clinical specimens such as plasma or stool.
+These diagnostic performance metrics are comparable to or exceed those reported in recent CRC lncRNA biomarker studies. Multi-lncRNA panels in other cancer types have achieved AUCs in the 0.85–0.98 range for tumor-normal discrimination, and individual lncRNAs such as LINC02577 have been reported with AUC = 0.982 in CRC. The high sensitivity and specificity observed here (e.g., SVM sensitivity = 0.989, specificity = 0.977) support the potential utility of these lncRNAs as non-invasive or tissue-based diagnostic adjuncts, pending validation in prospectively collected clinical specimens such as plasma or stool.
 
 \subsection*{Prognostic implications and the dominance of pathological stage}
 
@@ -402,16 +402,6 @@ F1 Score = 2\times(Recall\times Precision)/(Recall + Precision)
   \bibinfo{pages}{1955--1967}, \doiprefix\url{10.1002/ijc.30546}
   (\bibinfo{year}{2017}).
 
-\bibitem{RN19}
-\bibinfo{author}{Kourou, K.}, \bibinfo{author}{Exarchos, T.~P.},
-  \bibinfo{author}{Exarchos, K.~P.}, \bibinfo{author}{Karamouzis, M.~V.} \&
-  \bibinfo{author}{Fotiadis, D.~I.}
-\newblock \bibinfo{journal}{\bibinfo{title}{Machine learning applications in
-  cancer prognosis and prediction}}.
-\newblock {\emph{\JournalTitle{Comput Struct Biotechnol J}}}
-  \textbf{\bibinfo{volume}{13}}, \bibinfo{pages}{8--17},
-  \doiprefix\url{10.1016/j.csbj.2014.11.005} (\bibinfo{year}{2015}).
-
 \bibitem{RN20}
 \bibinfo{author}{Foster, K.~R.}, \bibinfo{author}{Koprowski, R.} \&
   \bibinfo{author}{Skufca, J.~D.}
@@ -460,16 +450,6 @@ F1 Score = 2\times(Recall\times Precision)/(Recall + Precision)
   suppresses gastric cancer progression via promoting slug degradation}}.
 \newblock {\emph{\JournalTitle{J Cell Mol Med}}} \textbf{\bibinfo{volume}{21}},
   \bibinfo{pages}{955--967}, \doiprefix\url{10.1111/jcmm.13035}
-  (\bibinfo{year}{2017}).
-
-\bibitem{RN26}
-\bibinfo{author}{Deng, M.}, \bibinfo{author}{Bragelmann, J.},
-  \bibinfo{author}{Kryukov, I.}, \bibinfo{author}{Saraiva-Agostinho, N.} \&
-  \bibinfo{author}{Perner, S.}
-\newblock \bibinfo{journal}{\bibinfo{title}{Firebrowser: an r client to the
-  broad institute's firehose pipeline}}.
-\newblock {\emph{\JournalTitle{Database (Oxford)}}}
-  \textbf{\bibinfo{volume}{2017}}, \doiprefix\url{10.1093/database/baw160}
   (\bibinfo{year}{2017}).
 
 \bibitem{RN27}
