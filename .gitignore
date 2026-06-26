@@ -74,3 +74,6 @@ $RECYCLE.BIN/
 /pipeline_flowchart.html
 03_Analysis/external_validation/
 Rplots.pdf
+*.rdata
+*.RData
+04_Manuscript/archive/
