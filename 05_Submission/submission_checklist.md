@@ -1,80 +1,84 @@
-# Submission Checklist
+# Submission Checklist — CRC lncRNA Biomarker Discovery
 
-## Manuscript Files
+**Target Journal:** Scientific Reports (wlscirep)  
+**Date:** 2026-06-26  
+**Corresponding Author:** Guanyu Wang (wangguanyu@zju.edu.cn)
 
-| # | File | Status | Notes |
-|---|------|--------|-------|
-| 1 | `04_Manuscript/manuscript_rewritten.tex` | Ready | Main manuscript in LaTeX |
-| 2 | `04_Manuscript/references.bib` | Ready | 33 references in BibTeX format |
-| 3 | `04_Manuscript/manuscript.pdf` | Pending | Compiled manuscript PDF |
-| 4 | `04_Manuscript/table1_clinical_baseline.md` | Ready | Clinical baseline characteristics |
-| 5 | `04_Manuscript/table2_model_performance.md` | Ready | Classification model performance |
-| 6 | `04_Manuscript/table_candidates.md` | Ready | Top 17 lncRNA candidates by HR |
+---
 
-## Figures
+## Manuscript
 
-| # | File | Status | Notes |
-|---|------|--------|-------|
-| 7 | `03_Analysis/outputs/Fig_2_feature_lncRNAs.pdf` | Ready | Fig 1: Candidate lncRNA features |
-| 8 | `03_Analysis/outputs/Fig_3a_crossvalidation_deviance.pdf` | Ready | Fig 2a: Cross-validation deviance |
-| 9 | `03_Analysis/outputs/Fig_3b_elastic_net_deviance.pdf` | Ready | Fig 2b: Elastic net deviance |
-| 10 | `03_Analysis/outputs/Fig_3c_coefficient_paths.pdf` | Ready | Fig 2c: Coefficient paths |
-| 11 | `03_Analysis/outputs/Fig_3_forestplot_cox.pdf` | Ready | Fig 3: Forest plot Cox model |
-| 12 | `03_Analysis/outputs/Fig_6_survival_train.pdf` | Ready | Fig 4a: KM curve training |
-| 13 | `03_Analysis/outputs/Fig_6_survival_test.pdf` | Ready | Fig 4b: KM curve testing |
-| 14 | `03_Analysis/outputs/Fig_4_roc_3year.pdf` | Ready | Fig 5a: ROC 3-year |
-| 15 | `03_Analysis/outputs/Fig_4_roc_5year.pdf` | Ready | Fig 5b: ROC 5-year |
-| 16 | `03_Analysis/outputs/Fig_5_auc_over_time.pdf` | Ready | Fig 5c: AUC over time |
-| 17 | `03_Analysis/outputs/Fig_12_brier_train.pdf` | Ready | Fig 6a: Brier score training |
-| 18 | `03_Analysis/outputs/Fig_12_brier_test.pdf` | Ready | Fig 6b: Brier score testing |
-| 19 | `03_Analysis/outputs/Fig_13_cindex_train.pdf` | Ready | Fig 6c: C-index training |
-| 20 | `03_Analysis/outputs/Fig_13_cindex_test.pdf` | Ready | Fig 6d: C-index testing |
-| 21 | `03_Analysis/outputs/Fig_14_roc_train.pdf` | Ready | Fig 7a: ROC training |
-| 22 | `03_Analysis/outputs/Fig_14_roc_test.pdf` | Ready | Fig 7b: ROC testing |
-| 23 | `03_Analysis/outputs/Fig_15_lift_train.pdf` | Ready | Fig 7c: Lift curve training |
-| 24 | `03_Analysis/outputs/Fig_15_lift_test.pdf` | Ready | Fig 7d: Lift curve testing |
+| # | File | Status |
+|---|------|--------|
+| 1 | `04_Manuscript/manuscript.tex` (551 lines, 32 refs) | ✅ |
+| 2 | `05_Submission/cover_letter.tex` | ✅ |
+
+## Main Figures (7)
+
+| Fig | File | Status |
+|-----|------|--------|
+| Fig 1 | Pipeline flowchart (Figure-1-Guanyu) | ⬜ custom |
+| Fig 2 | `Fig_2_feature_lncRNAs.pdf` + `Fig_3a/b_*.pdf` | ✅ |
+| Fig 3 | `Fig_3_forestplot_cox.pdf` | ✅ |
+| Fig 4 | `Fig_S1_survival_by_stage.pdf` + `Fig_6_survival_*.pdf` | ✅ |
+| Fig 5 | `Fig_4_roc_1/3/5year.pdf` + `Fig_5_auc_over_time.pdf` | ✅ |
+| Fig 6 | `Fig_12_brier_*.pdf` + `Fig_13_cindex_*.pdf` | ✅ |
+| Fig 7 | `Fig_14_roc_*.pdf` + `Fig_15_lift_*.pdf` + `Fig_16_model_comparison.pdf` | ✅ |
+
+## Main Tables (2)
+
+| Tab | In manuscript | Status |
+|-----|-------------|--------|
+| Tab 1 | Top 17 lncRNAs (DE + survival) | ✅ |
+| Tab 2 | 5-model classification performance | ✅ |
 
 ## Supplementary Materials
 
-| # | File | Status | Notes |
-|---|------|--------|-------|
-| 25 | `03_Analysis/outputs/Fig_S1_survival_by_stage.pdf` | Ready | Table S1: Survival by stage |
-| 26 | `03_Analysis/outputs/Fig_S2_rf_vimp.pdf` | Ready | Fig S2: RF variable importance |
-| 27 | `03_Analysis/outputs/Fig_S3_rf_vimp_bar.pdf` | Ready | Fig S3: RF variable importance bar |
-| 28 | `03_Analysis/outputs/Fig_S4_feature_density.pdf` | Ready | Fig S4: Feature density |
-| 29 | `03_Analysis/outputs/Fig_S5_feature_boxplot.pdf` | Ready | Fig S5: Feature boxplot |
-| 30 | `03_Analysis/outputs/Fig_S6_model_tuning.pdf` | Ready | Fig S6: Model tuning |
+| # | Description | File | Status |
+|---|-------------|------|--------|
+| Tab S1 | Clinical baseline (train/test) | In manuscript | ✅ |
+| Tab S2 | lncRNA features in patient groups | In manuscript | ✅ |
+| Tab S3 | Cross-cohort clinical comparison | `tables/table_supp_clinical_comparison.tex` | ✅ |
+| Fig S1 | Survival by stage | `Fig_S1_survival_by_stage.pdf` | ✅ |
+| Fig S2-3 | RF variable importance | `Fig_S2/3_rf_vimp*.pdf` | ✅ |
+| Fig S4-5 | Feature distribution | `Fig_S4/5_feature_*.pdf` | ✅ |
+| Fig S6 | Model tuning | `Fig_S6_model_tuning.pdf` | ✅ |
+| Fig EV1-2 | READ external validation | `Fig_EV1/2_READ_*.pdf` | ✅ |
+| Fig EV3-4 | GEO external validation | `Fig_EV3/4_GEO_*.pdf` | ✅ |
 
-## Submission Documents
+## Code & Data
 
-| # | File | Status | Notes |
-|---|------|--------|-------|
-| 31 | `05_Submission/cover_letter.md` | Ready | Cover letter to editor |
-| 32 | `05_Submission/submission_checklist.md` | Ready | This checklist |
+| Item | URL |
+|------|-----|
+| Analysis code | https://github.com/woodhaha/CRCproject-lncrna |
+| TOIL expression | https://toil.xenahubs.net |
+| TCGA clinical | https://portal.gdc.cancer.gov |
+| GEO datasets | GSE39582, GSE17536 (NCBI GEO) |
 
-## Additional Requirements
+## Pre-submission
 
-| # | Item | Status | Notes |
-|---|------|--------|-------|
-| 33 | Code repository public | Ready | https://github.com/woodhaha/CRC_data_mining |
-| 34 | Competing interests statement | Ready | In manuscript |
-| 35 | Author contributions | Ready | In manuscript |
-| 36 | Data availability statement | Ready | In manuscript |
-| 37 | Figures in required format (300 DPI TIFF/EPS) | Pending | Convert from PDF |
-| 38 | Manuscript formatted per journal guidelines | Pending | Verify Frontiers in Oncology style |
-| 39 | All authors confirmed for submission | Pending | Obtain final approval |
-| 40 | ORCID IDs for all authors | Pending | Add if required |
+- [x] All numerical claims cross-checked against pipeline outputs (14/14 match)
+- [x] All 36 pipeline figures valid (no empty files)
+- [x] References cleaned (duplicate RN19 removed, unused RN26 removed)
+- [x] Discussion includes external validation + limitations
+- [x] Conclusions quantify main model specifications
+- [x] Author contributions, competing interests, funding declared
+- [x] Code repository public with complete pipeline
+- [ ] Compile manuscript.tex → PDF
+- [ ] Convert figures to required format if journal specifies EPS/TIFF
+- [ ] All authors confirm submission
 
-## Submission Portal Steps
+---
 
-- [ ] Register/login to Frontiers in Oncology submission portal
-- [ ] Upload manuscript file (PDF or LaTeX)
-- [ ] Upload figure files
-- [ ] Upload supplementary materials
-- [ ] Enter/confirm author information
-- [ ] Suggest reviewers (optional)
-- [ ] Complete conflict of interest disclosure
-- [ ] Review and submit
+## Submission Package
 
-**Prepared:** June 25, 2026
-**Target Journal:** *Frontiers in Oncology*
+```
+05_Submission/
+├── cover_letter.tex
+├── manuscript/
+│   └── manuscript.tex
+├── figures/          (main 7 figures)
+├── supplementary/    (S1-S6 + EV1-EV4)
+├── tables/           (Table S3)
+└── submission_checklist.md
+```

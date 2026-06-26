@@ -1,0 +1,83 @@
+\documentclass[fleqn,10pt]{wlscirep}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx}
+\usepackage{booktabs,dcolumn}
+\usepackage{color, colortbl}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\begin{center}
+{\LARGE \textbf{Cover Letter}}
+\end{center}
+
+\vspace{1cm}
+
+\textbf{Date:} \today
+
+\textbf{To:} The Editors \\
+\textit{Scientific Reports}
+
+\vspace{0.5cm}
+
+\textbf{Dear Editors,}
+
+We are pleased to submit our manuscript entitled \textbf{``Discovery of Diagnostic and Prognostic Long Non-Coding RNA Biomarkers in Patients with Colorectal Cancer Using Machine Learning Algorithms''} for consideration for publication in \textit{Scientific Reports}.
+
+\subsection*{Summary of the Work}
+
+This study develops an integrated machine learning pipeline for lncRNA biomarker discovery in colorectal cancer. Using TOIL-recomputed TCGA-GTEx RNA-seq data (n = 639) and TCGA-COAD clinical follow-up (n = 443), we:
+
+\begin{enumerate}
+    \item Identified 36 lncRNAs achieving near-perfect tumor-normal discrimination (SVM AUC = 0.999, random forest AUC = 0.997)
+    \item Developed a 97-feature Cox PH prognostic model that improved Harrell's C-index by +0.123 over stage alone
+    \item Externally validated the prognostic risk score across three independent cohorts totaling 917 patients (TCGA-READ, GSE39582, GSE17536), demonstrating consistent hazard ratio directionality
+    \item Demonstrated that pathological stage remains the dominant prognostic factor (RF VIMP = 1.000), with lncRNAs providing incremental value
+\end{enumerate}
+
+\subsection*{Key Strengths}
+
+\begin{itemize}
+    \item Five classification algorithms benchmarked with rigorous cross-validation
+    \item External validation across RNA-seq and microarray platforms spanning 917 patients
+    \item Comprehensive cross-cohort clinical comparison with statistical testing
+    \item Transparent discussion of platform compatibility limitations and annotation drift
+    \item All analysis code publicly available at \url{https://github.com/woodhaha/CRCproject-lncrna}
+\end{itemize}
+
+\subsection*{Significance}
+
+This work addresses a critical gap in lncRNA biomarker research: the systematic integration of diagnostic classification and prognostic modeling with multi-cohort external validation. Our findings highlight important methodological considerations—GENCODE annotation stability, cross-platform gene coverage, and the distributed nature of lncRNA prognostic signals—that should inform future biomarker discovery studies.
+
+\subsection*{Declarations}
+
+\begin{itemize}
+    \item This manuscript has not been published and is not under consideration elsewhere
+    \item All authors have read and approved the manuscript
+    \item The authors declare no competing interests
+    \item All data sources are publicly available as described in Methods
+    \item Analysis code is available at \url{https://github.com/woodhaha/CRCproject-lncrna}
+\end{itemize}
+
+\vspace{0.5cm}
+
+Thank you for your time and consideration. We look forward to your response.
+
+\vspace{0.5cm}
+
+\textbf{Sincerely,}
+
+\vspace{0.3cm}
+
+Guanyu Wang, MD \\
+Department of General Surgery \\
+Sir Run Run Shaw Hospital, School of Medicine \\
+Zhejiang University \\
+Hangzhou, Zhejiang 310016, China \\
+Email: wangguanyu@zju.edu.cn
+
+\end{document}
