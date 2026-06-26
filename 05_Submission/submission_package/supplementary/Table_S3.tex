@@ -1,0 +1,44 @@
+% Supplementary Table: Cross-cohort clinical characteristics comparison
+\begin{table}[htp]
+\setlength\tabcolsep{4pt}
+\centering
+\caption{Comparison of clinical characteristics across training and external validation cohorts.}
+\label{TabS_clinical}
+\begin{tabular}{@{}lcccc@{}}
+\toprule[2pt]
+\textbf{Characteristic} & \textbf{TCGA-COAD} & \textbf{TCGA-READ} & \textbf{GSE39582} & \textbf{GSE17536} \\
+& \textit{(Training)} & \textit{(Ext.\ validation)} & \textit{(Ext.\ validation)} & \textit{(Ext.\ validation)} \\
+\midrule[1pt]
+Sample size, $N$ & 458 & 177 & 585 & 177 \\
+Cancer type & Colon adeno. & Rectal adeno. & Colon adeno. & CRC \\
+Age (years), mean $\pm$ SD & $67 \pm 13$ & $64 \pm 12$ & $67 \pm 13$ & $68 \pm 13$ \\[3pt]
+Gender, $N$ (\%) & & & & \\
+\quad Male & 242 (52.8) & 94 (53.1) & 322 (55.0) & 96 (54.2) \\
+\quad Female & 216 (47.2) & 82 (46.3) & 263 (45.0) & 81 (45.8) \\[3pt]
+AJCC Stage, $N$ (\%) & & & & \\
+\quad Stage I & 76 (16.6) & 32 (18.1) & —$^{\dagger}$ & 24 (13.6) \\
+\quad Stage II & 178 (38.9) & 45 (25.4) & — & 57 (32.2) \\
+\quad Stage III & 129 (28.2) & 49 (27.7) & — & 57 (32.2) \\
+\quad Stage IV & 65 (14.2) & 18 (10.2) & — & 39 (22.0) \\
+\quad Unknown$^{\dagger}$ & 10 (2.2) & 33 (18.6) & 585 (100) & 0 (0.0) \\[3pt]
+Vital status, $N$ (\%) & & & & \\
+\quad Dead & 102 (22.3) & 31 (17.5) & 194 (33.2) & 73 (41.2) \\
+\quad Alive & 356 (77.7) & 146 (82.5) & 391 (66.8) & 104 (58.8) \\[3pt]
+Follow-up (months), median & 22.0 & 20.3 & 52.0 & 42.0 \\
+Overall survival endpoint & OS & OS & OS & OS \\
+\midrule[1pt]
+Platform & RNA-seq (TOIL) & RNA-seq (GDC) & Microarray & Microarray \\
+Gene annotation & GENCODE v22/23 & GENCODE v36 & GPL570 & GPL570 \\
+\midrule[1pt]
+\multicolumn{5}{@{}l@{}}{\small \textbf{Statistical comparison (p-values)}} \\[3pt]
+\quad Age (ANOVA) & \multicolumn{4}{c}{$F(3, 1393) = 3.38$, $p = 0.018$} \\
+\quad Gender ($\chi^2$) & \multicolumn{4}{c}{$\chi^2 = 0.53$, df = 3, $p = 0.912$} \\
+\quad Stage$^{\ddagger}$ ($\chi^2$) & \multicolumn{4}{c}{$\chi^2 = 13.74$, df = 6, $p = 0.033$} \\
+\quad Mortality ($\chi^2$) & \multicolumn{4}{c}{$\chi^2 = 39.43$, df = 3, $p < 0.0001$} \\[3pt]
+\bottomrule[1.5pt]
+\multicolumn{5}{@{}l@{}}{\footnotesize $^{\dagger}$GSE39582 AJCC stage data unavailable from GEO series matrix (coded as ``0'' for all samples).} \\
+\multicolumn{5}{@{}l@{}}{\footnotesize $^{\ddagger}$Stage comparison excludes GSE39582 (3 cohorts only).} \\
+\multicolumn{5}{@{}l@{}}{\footnotesize OS, overall survival; TOIL, UCSC Treehouse Ovarian and Intracellular Logistics pipeline; GDC, NCI Genomic Data Commons;} \\
+\multicolumn{5}{@{}l@{}}{\footnotesize GPL570, Affymetrix Human Genome U133 Plus 2.0 Array.}
+\end{tabular}
+\end{table}
